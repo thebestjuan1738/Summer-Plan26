@@ -109,6 +109,16 @@
   .day-col.drag-over { border-color: #1a1a18; box-shadow: 0 0 0 2px rgba(26,26,24,0.15); background: #fafaf8; }
   .day-item { cursor: grab; }
   .day-item:active { cursor: grabbing; }
+  .gym-row { display:flex; align-items:center; gap:6px; padding:5px 7px 6px; border-top:1px solid #f0ede6; cursor:pointer; font-size:11px; color:#888; }
+  .gym-row:hover { background:#f5f4f0; }
+  .gym-cb { width:13px; height:13px; border-radius:3px; border:1.5px solid #ccc; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .gym-cb.gym-cb-done { background:#378ADD; border-color:#378ADD; }
+  .gym-strip { display:flex; align-items:center; gap:10px; margin-top:10px; padding:8px 12px; background:#fff; border:1px solid #e8e6e0; border-radius:10px; }
+  .gym-strip-label { font-size:12px; color:#666; white-space:nowrap; }
+  .gym-bars { display:flex; gap:4px; }
+  .gym-bar-block { width:30px; height:8px; border-radius:4px; background:#e8e6e0; transition:background 0.2s; }
+  .gym-bar-block.filled { background:#378ADD; }
+  .gym-strip-count { font-size:12px; font-weight:600; color:#378ADD; }
 
   /* ── Reading list ── */
   .reading-list-view { display: flex; flex-direction: column; gap: 10px; }
@@ -149,7 +159,9 @@
 <script>
 const STORAGE_KEY = 'summer26_v3';
 const SCHED_KEY   = 'summer26_sched_v1';
+const GYM_KEY     = 'summer26_gym_v1';
 let scheduleState;
+let gymState = {};
 let dragSrc = null;
 
 function loadScheduleState() {
@@ -163,6 +175,30 @@ function loadScheduleState() {
 
 function saveScheduleState() {
   try { localStorage.setItem(SCHED_KEY, JSON.stringify(scheduleState)); } catch(e) {}
+}
+
+function loadGymState() {
+  try {
+    const saved = localStorage.getItem(GYM_KEY);
+    gymState = saved ? JSON.parse(saved) : {};
+  } catch(e) { gymState = {}; }
+  // ensure each week has an array sized to its day count
+  Object.keys(schedule).forEach(wk => {
+    if (!Array.isArray(gymState[wk]) || gymState[wk].length !== schedule[wk].days.length) {
+      gymState[wk] = schedule[wk].days.map(() => false);
+    }
+  });
+}
+
+function saveGymState() {
+  try { localStorage.setItem(GYM_KEY, JSON.stringify(gymState)); } catch(e) {}
+}
+
+function toggleGym(wk, dayIdx) {
+  if (!Array.isArray(gymState[wk])) gymState[wk] = [];
+  gymState[wk][dayIdx] = !gymState[wk][dayIdx];
+  saveGymState();
+  render();
 }
 
 function dragStart(e, wk, dayIdx, itemIdx) {
@@ -787,37 +823,37 @@ const schedule = {
     ]},
   ]},
   w6: { days: [
-    { day:'Sun', m:5, d:21, accent:null, items:[
+    { day:'Mon', m:5, d:15, accent:null, items:[
       { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Stock up groceries + supplies pre-surgery', type:'high', taskId:'w5_l3' },
       { text:'Revisit SK book outline', type:'medium', taskId:'w5_c3' },
       { text:'Get haircut before surgery', type:'medium', taskId:'w5_pe2' },
     ]},
-    { day:'Mon', m:5, d:22, accent:null, items:[
+    { day:'Tue', m:5, d:16, accent:null, items:[
       { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Mom cooking session', type:'medium', taskId:'w5_ck1' },
       { text:'Follow up on professor emails', type:'high', taskId:'w6_t3' },
       { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
-    { day:'Tue', m:5, d:23, accent:null, items:[
+    { day:'Wed', m:5, d:17, accent:null, items:[
       { text:'Gym — last few days before surgery', type:'high', taskId:'w5_p2' },
       { text:'Set up recovery station at home', type:'critical', taskId:'w5_l2' },
       { text:'Return wardrobe items that don\'t fit', type:'medium', taskId:'w5_l4' },
       { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
-    { day:'Wed', m:5, d:24, accent:null, items:[
+    { day:'Thu', m:5, d:18, accent:null, items:[
       { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Open brokerage account (Fidelity)', type:'medium', taskId:'w6_f1' },
       { text:'Read UT Austin lab papers', type:'medium', taskId:'w6_t4' },
       { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
-    { day:'Thu', m:5, d:25, accent:null, items:[
+    { day:'Fri', m:5, d:19, accent:null, items:[
       { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Confirm all surgery logistics', type:'critical' },
       { text:'Prep recovery station — books, chargers, water', type:'high', taskId:'w5_l2' },
       { text:'Skincare — morning + night', type:'high', taskId:'w6_pe1' },
     ]},
-    { day:'Fri', m:5, d:26, accent:null, items:[
+    { day:'Sat', m:5, d:20, accent:null, items:[
       { text:'Gym — final session before surgery', type:'high', taskId:'w5_p2' },
       { text:'Catch up on mail + admin', type:'medium', taskId:'w6_l1' },
       { text:'Set weekly review habit', type:'medium', taskId:'w6_l2' },
@@ -829,41 +865,41 @@ const schedule = {
     ]},
   ]},
   w7: { days: [
-    { day:'Mon', m:5, d:22, accent:'milestone-day', items:[
+    { day:'Mon', m:6, d:6, accent:'milestone-day', items:[
       { text:'🏥 Surgery day — rest completely', type:'sched-milestone' },
       { text:'PT as prescribed', type:'critical', taskId:'w6_p1' },
     ]},
-    { day:'Tue', m:5, d:23, accent:null, items:[
+    { day:'Tue', m:6, d:7, accent:null, items:[
       { text:'PT exercises', type:'critical', taskId:'w6_p1' },
       { text:'Start Storyworthy from bed', type:'medium', taskId:'w7_r1' },
       { text:'Skincare', type:'high', taskId:'w6_pe1' },
     ]},
-    { day:'Wed', m:5, d:24, accent:null, items:[
+    { day:'Wed', m:6, d:8, accent:null, items:[
       { text:'Morning ritual — coffee, stretch, read', type:'high' },
       { text:'Python deep learning — first session', type:'high', taskId:'w6_t1' },
       { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
       { text:'Posture routine — 10 min', type:'high', taskId:'w6_p2' },
     ]},
-    { day:'Thu', m:5, d:25, accent:null, items:[
+    { day:'Thu', m:6, d:9, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Portfolio — resume from laptop', type:'critical', taskId:'w6_t2' },
       { text:'SK book — write from bed', type:'medium', taskId:'w6_c2' },
       { text:'Posture routine', type:'high', taskId:'w6_p2' },
     ]},
-    { day:'Fri', m:5, d:26, accent:null, items:[
+    { day:'Fri', m:6, d:10, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Intimate Connections — start', type:'medium', taskId:'w6_r2' },
       { text:'Skincare', type:'high', taskId:'w6_pe1' },
       { text:'Touch typing — 20 min', type:'medium', taskId:'w6_pe2' },
       { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
-    { day:'Sat', m:5, d:27, accent:null, items:[
+    { day:'Sat', m:6, d:11, accent:null, items:[
       { text:'Start Project Hail Mary', type:'medium', taskId:'w7_r2' },
       { text:'Calligraphy practice', type:'medium', taskId:'w6_c3' },
       { text:'Touch typing', type:'medium', taskId:'w6_pe2' },
       { text:'Posture routine', type:'high', taskId:'w6_p2' },
     ]},
-    { day:'Sun', m:5, d:28, accent:null, items:[
+    { day:'Sun', m:6, d:12, accent:null, items:[
       { text:'Weekly review — what got done?', type:'medium', taskId:'w6_l2' },
       { text:'ROS fundamentals — start', type:'high', taskId:'w7_t1' },
       { text:'Wardrobe finalization — order from bed', type:'low', taskId:'w6_pe3' },
@@ -871,47 +907,47 @@ const schedule = {
     ]},
   ]},
   w8: { days: [
-    { day:'Mon', m:5, d:29, accent:null, items:[
+    { day:'Mon', m:6, d:13, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Python deep learning — continue', type:'high', taskId:'w7_t2' },
       { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
       { text:'Skincare', type:'high', taskId:'w7_pe1' },
     ]},
-    { day:'Tue', m:5, d:30, accent:null, items:[
+    { day:'Tue', m:6, d:14, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Portfolio — push to complete', type:'critical', taskId:'w8_t3' },
       { text:'Recreate lab work — document everything', type:'high', taskId:'w8_t4' },
       { text:'Touch typing', type:'high', taskId:'w7_pe1' },
     ]},
-    { day:'Wed', m:6, d:1, accent:null, items:[
+    { day:'Wed', m:6, d:15, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'ROS — core modules', type:'high', taskId:'w8_t1' },
       { text:'SK book — 3+ pages', type:'medium', taskId:'w8_c3' },
       { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
-    { day:'Thu', m:6, d:2, accent:null, items:[
+    { day:'Thu', m:6, d:16, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Start walking robot upgrade', type:'high', taskId:'w8_t2' },
       { text:'Film robot demo footage', type:'medium', taskId:'w8_c2' },
       { text:'Research Austin neighborhoods', type:'high', taskId:'w8_pe2' },
       { text:'Calligraphy', type:'low', taskId:'w8_c4' },
     ]},
-    { day:'Fri', m:6, d:3, accent:null, items:[
+    { day:'Fri', m:6, d:17, accent:null, items:[
       { text:'Weekly review', type:'medium', taskId:'w6_l2' },
       { text:'Research renter\'s insurance', type:'medium', taskId:'w8_pe3' },
       { text:'Start The Name of the Wind', type:'medium', taskId:'w8_r1' },
       { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
-    { day:'Sat', m:6, d:4, accent:null, items:[
+    { day:'Sat', m:6, d:18, accent:null, items:[
       { text:'🎵 Singing lesson', type:'sched-event', taskId:'w7_c1' },
       { text:'Date dish — Salmon with lemon cream sauce', type:'medium', taskId:'w7_ck1' },
       { text:'Mom / Colombian dish session', type:'medium', taskId:'w7_ck2' },
       { text:'Finalize wardrobe orders', type:'medium', taskId:'w7_pe2' },
     ]},
-    { day:'Sun', m:6, d:5, accent:null, items:[
+    { day:'Sun', m:6, d:19, accent:null, items:[
       { text:'PT + rest', type:'critical', taskId:'w7_p1' },
       { text:'Confirm Austin stipend details', type:'high', taskId:'w7_f2' },
       { text:'YouTube channel setup', type:'low', taskId:'w7_c4' },
@@ -919,44 +955,44 @@ const schedule = {
     ]},
   ]},
   w9: { days: [
-    { day:'Mon', m:6, d:6, accent:null, items:[
+    { day:'Mon', m:6, d:20, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Research statement — write draft', type:'high', taskId:'w9_t3' },
       { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
       { text:'Posture routine', type:'high', taskId:'w8_p2' },
       { text:'Skincare', type:'high', taskId:'w8_pe1' },
     ]},
-    { day:'Tue', m:6, d:7, accent:null, items:[
+    { day:'Tue', m:6, d:21, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Portfolio — final review, send to someone', type:'high', taskId:'w9_t1' },
       { text:'Pack for Austin — start', type:'critical', taskId:'w9_l1' },
       { text:'Last wardrobe returns completed', type:'medium', taskId:'w9_pe3' },
     ]},
-    { day:'Wed', m:6, d:8, accent:null, items:[
+    { day:'Wed', m:6, d:22, accent:null, items:[
       { text:'Confirm surgeon clearance for move', type:'critical', taskId:'w9_p1' },
       { text:'Confirm Austin housing', type:'critical', taskId:'w9_l2' },
       { text:'Write down all mom recipes', type:'high', taskId:'w9_ck2' },
       { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
     ]},
-    { day:'Thu', m:6, d:9, accent:null, items:[
+    { day:'Thu', m:6, d:23, accent:null, items:[
       { text:'Edit + publish YouTube video 🎬', type:'medium', taskId:'w9_t2' },
       { text:'Pack gear + lab equipment', type:'high', taskId:'w9_l1' },
       { text:'Austin month-1 budget finalized', type:'high', taskId:'w9_f1' },
       { text:'Posture routine', type:'high', taskId:'w8_p2' },
     ]},
-    { day:'Fri', m:6, d:10, accent:null, items:[
+    { day:'Fri', m:6, d:24, accent:null, items:[
       { text:'Get haircut before Austin', type:'high', taskId:'w9_pe1' },
       { text:'Final singing lesson', type:'sched-event', taskId:'w9_c1' },
       { text:'SK book — finish or set stopping point', type:'medium', taskId:'w9_c2' },
       { text:'Lay out first-week Austin outfits', type:'medium', taskId:'w9_pe4' },
     ]},
-    { day:'Sat', m:6, d:11, accent:null, items:[
+    { day:'Sat', m:6, d:25, accent:null, items:[
       { text:'Garage lab — document + store projects', type:'medium', taskId:'w9_l5' },
       { text:'Say goodbyes — family + friends', type:'high', taskId:'w9_l4' },
       { text:'Smash burgers — date dish #5', type:'low', taskId:'w9_pe2' },
       { text:'HYSA + brokerage confirmed active', type:'medium', taskId:'w9_f2' },
     ]},
-    { day:'Sun', m:6, d:12, accent:'milestone-day', items:[
+    { day:'Sun', m:6, d:26, accent:'milestone-day', items:[
       { text:'🍽️ Big family farewell meal', type:'sched-milestone', taskId:'w9_ck1' },
       { text:'Truck packed and ready', type:'critical', taskId:'w9_l3' },
       { text:'🤘 Austin tomorrow', type:'sched-rest' },
@@ -1004,6 +1040,7 @@ let checked    = {};
 function loadState() {
   try { const r = localStorage.getItem(STORAGE_KEY); if (r) checked = JSON.parse(r); } catch(e) { checked = {}; }
   loadScheduleState();
+  loadGymState();
   // auto-jump to current week
   const today = new Date();
   const ranges = [
@@ -1178,10 +1215,33 @@ function renderSchedule() {
       }
     }
 
+    // gym row
+    const gymDone = gymState[currentWeek] && gymState[currentWeek][dayIdx];
+    html += `<div class="gym-row" draggable="false" onclick="event.stopPropagation();toggleGym('${currentWeek}',${dayIdx})">
+      <div class="gym-cb${gymDone?' gym-cb-done':''}">
+        ${gymDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+      </div>
+      <span>🏋️ Gym</span>
+    </div>`;
+
     html += `</div></div>`;
   }
 
   html += `</div>`;
+
+  // gym strip for non-Europe weeks
+  if (weeks[currentWeek].badge.type !== 'travel') {
+    const gymCount = Math.min((gymState[currentWeek] || []).filter(Boolean).length, 5);
+    const bars = [1,2,3,4,5].map(i =>
+      `<div class="gym-bar-block${i <= gymCount ? ' filled' : ''}"></div>`
+    ).join('');
+    html += `<div class="gym-strip">
+      <span class="gym-strip-label">💪 Gym this week</span>
+      <div class="gym-bars">${bars}</div>
+      <span class="gym-strip-count">${gymCount}/5</span>
+    </div>`;
+  }
+
   return html;
 }
 
