@@ -3,20 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Summer 2026 Task Tracker</title>
+<title>Summer 2026</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f8f5; color: #1a1a18; padding: 24px; min-height: 100vh; }
   h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
-  .week-selector { display: flex; gap: 8px; margin-bottom: 16px; }
-  .week-btn { padding: 7px 20px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; color: #666; background: #fff; transition: all 0.15s; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 18px; }
+
+  /* ── Top nav: view mode ── */
+  .view-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .view-btn { padding: 7px 18px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; color: #666; background: #fff; transition: all 0.15s; white-space: nowrap; font-weight: 500; }
+  .view-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+  .view-btn.reading-btn { border-color: #c8a96e; color: #8a6a30; }
+  .view-btn.reading-btn.active { background: #8a6a30; border-color: #8a6a30; color: #fff; }
+
+  /* ── Week tab row ── */
+  .week-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .week-btn { padding: 5px 14px; border-radius: 16px; font-size: 12px; cursor: pointer; border: 1px solid #e0ddd8; color: #888; background: #faf9f7; transition: all 0.15s; white-space: nowrap; }
   .week-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; font-weight: 500; }
-  .status-bar { font-size: 13px; color: #666; margin-bottom: 14px; }
+  .week-btn .wdates { opacity: 0.6; font-size: 10px; }
+
+  /* ── Status / badge ── */
+  .status-bar { font-size: 13px; color: #666; margin-bottom: 12px; }
   .status-bar strong { color: #1a1a18; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .week-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; margin-bottom: 12px; }
+  .week-badge.travel  { background: #fef3e2; color: #8a6a30; border: 1px solid #f0d9a8; }
+  .week-badge.home    { background: #e8f5e9; color: #2e7d32; border: 1px solid #b8dfba; }
+  .week-badge.austin  { background: #e8eaf6; color: #3949ab; border: 1px solid #c5cae9; }
+  .week-badge.pre-trip{ background: #f3e5f5; color: #6a1b9a; border: 1px solid #ce93d8; }
+
+  /* ── Legend ── */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
   .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
   .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ── Tasks grid ── */
   .grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
   @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
   .card { border-radius: 12px; border: 1px solid #e8e6e0; background: #fff; overflow: hidden; }
@@ -37,31 +58,105 @@
   .task-item.done .checkmark { display: block; }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
   .dot-critical { background: #E24B4A; }
-  .dot-high { background: #BA7517; }
-  .dot-medium { background: #378ADD; }
-  .dot-low { background: #639922; }
+  .dot-high     { background: #BA7517; }
+  .dot-medium   { background: #378ADD; }
+  .dot-low      { background: #639922; }
   .task-content { flex: 1; min-width: 0; }
   .task-text { font-size: 12px; line-height: 1.35; }
-  .task-sub { font-size: 10px; color: #999; margin-top: 2px; line-height: 1.3; }
+  .task-sub  { font-size: 10px; color: #999; margin-top: 2px; line-height: 1.3; }
+
+  /* ── Schedule view ── */
+  .schedule-grid { display: grid; grid-template-columns: repeat(7, minmax(148px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+  .day-col { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .day-col.is-today { border-color: #1a1a18; box-shadow: 0 0 0 1px #1a1a18; }
+  .day-col.is-today .day-header { background: #1a1a18; }
+  .day-col.is-today .day-name  { color: rgba(255,255,255,0.55); }
+  .day-col.is-today .day-date  { color: #fff; }
+  .day-col.is-today .today-pip { display: block; }
+  .day-col.is-today.travel-day .day-header  { background: #92400e; border-color: #92400e; }
+  .day-col.is-today.milestone-day .day-header { background: #3949ab; }
+  .day-header { padding: 10px 12px 9px; border-bottom: 1px solid #f0ede6; }
+  .day-col.travel-day   .day-header { background: #fef3e2; border-bottom-color: #f0d9a8; }
+  .day-col.milestone-day .day-header { background: #e8eaf6; border-bottom-color: #c5cae9; }
+  .day-name { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+  .day-col.travel-day .day-name   { color: #b45309; }
+  .day-col.milestone-day .day-name { color: #3949ab; }
+  .day-date { font-size: 16px; font-weight: 700; color: #1a1a18; margin-top: 1px; line-height: 1; }
+  .day-col.travel-day   .day-date { color: #92400e; }
+  .day-col.milestone-day .day-date { color: #283593; }
+  .today-pip { display: none; font-size: 9px; font-weight: 700; color: #E24B4A; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+  .day-col.is-today .today-pip { display: block; color: rgba(255,255,255,0.85); }
+  .day-items { padding: 8px 7px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .day-item { font-size: 11px; line-height: 1.35; padding: 5px 7px; border-radius: 7px; display: flex; align-items: flex-start; gap: 5px; }
+  .day-item.sched-event    { background: #f3e5f5; color: #6a1b9a; font-weight: 500; }
+  .day-item.sched-travel   { background: #fef3e2; color: #92400e; font-weight: 500; }
+  .day-item.sched-milestone{ background: #e8eaf6; color: #283593; font-weight: 500; }
+  .day-item.sched-rest     { background: #f1f3f4; color: #888; }
+  .day-item.sched-task     { background: #f9f8f5; color: #1a1a18; }
+  .sched-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .sched-dot.critical { background: #E24B4A; }
+  .sched-dot.high     { background: #BA7517; }
+  .sched-dot.medium   { background: #378ADD; }
+  .sched-dot.low      { background: #639922; }
+  .sched-dot.note     { background: #ccc; }
+  .sched-dot.event    { background: #9c27b0; }
+  .sched-dot.travel   { background: #f59e0b; }
+  .sched-dot.milestone{ background: #3949ab; }
+  .sched-item-text { flex: 1; }
+  .sched-cb { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,0.2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: rgba(255,255,255,0.6); }
+  .sched-cb-done { background: #1a1a18; border-color: #1a1a18; }
+  .sched-done { opacity: 0.65; }
+
+  /* ── Reading list ── */
+  .reading-list-view { display: flex; flex-direction: column; gap: 10px; }
+  .reading-section-title { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 6px; padding-left: 2px; }
+  .book-card { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 14px; cursor: pointer; transition: background 0.1s; }
+  .book-card:hover { background: #faf9f7; }
+  .book-card.done { opacity: 0.55; }
+  .book-card.done .book-title { text-decoration: line-through; color: #bbb; }
+  .book-emoji { font-size: 26px; flex-shrink: 0; }
+  .book-info { flex: 1; min-width: 0; }
+  .book-title  { font-size: 14px; font-weight: 500; line-height: 1.3; }
+  .book-author { font-size: 12px; color: #999; margin-top: 2px; }
+  .book-note   { font-size: 11px; color: #aaa; margin-top: 5px; line-height: 1.4; }
+  .book-status { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .book-tag    { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .tag-reading { background: #dbeafe; color: #1d4ed8; }
+  .tag-queued  { background: #f3f4f6; color: #6b7280; }
+  .tag-done    { background: #d1fae5; color: #065f46; }
+  .tag-trip    { background: #fef3e2; color: #92400e; }
+  .book-checkbox { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .book-card.done .book-checkbox { background: #1a1a18; border-color: #1a1a18; }
+  .reading-progress-summary { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 16px; display: flex; gap: 20px; align-items: center; }
+  .rps-stat  { text-align: center; flex-shrink: 0; }
+  .rps-num   { font-size: 22px; font-weight: 700; }
+  .rps-label { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .rps-bar-wrap  { flex: 1; }
+  .rps-bar-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+  .rps-bar       { height: 6px; background: #f0ede6; border-radius: 3px; }
+  .rps-bar-fill  { height: 100%; border-radius: 3px; background: #8a6a30; transition: width 0.3s; }
 </style>
 </head>
 <body>
 
 <h1>Summer 2026</h1>
-<p class="subtitle">Pre-Europe trip tasks · check off as you go</p>
+<p class="subtitle">Self-improvement · UT Austin prep · fun maximization</p>
 <div id="app"></div>
 
 <script>
-const STORAGE_KEY = 'summer26_checked_v1';
+const STORAGE_KEY = 'summer26_v3';
 
+// ─────────────────────────────────────────────
+// TASK DATA
+// ─────────────────────────────────────────────
 const weeks = {
   w1: {
-    label: 'Week 1',
-    dates: 'May 13–18',
+    label: 'Week 1', dates: 'May 13–19',
+    badge: { type: 'pre-trip', icon: '📦', text: 'Just Back from Duke' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
-        { id: 'w1_p1', text: 'Book MSF course for May 24–25', sub: 'Do this today — courses fill fast', priority: 'critical' },
-        { id: 'w1_p2', text: 'Look up shooting ranges near MD', sub: 'For the June 14–22 window', priority: 'low' },
+        { id: 'w1_p1', text: 'Complete HD Rider Course signup', sub: 'Jun 18–19 confirmed — do online pre-work before then', priority: 'critical' },
+        { id: 'w1_p2', text: 'Look up shooting ranges near MD', sub: 'For the Jun 14–22 window', priority: 'low' },
       ]},
       { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
         { id: 'w1_l1', text: 'Unpack all Duke boxes', sub: 'Sort keep / store / toss', priority: 'critical' },
@@ -74,7 +169,7 @@ const weeks = {
         { id: 'w1_t2', text: 'Python — install environment', sub: 'Just set it up, no pressure to go deep', priority: 'medium' },
       ]},
       { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
-        { id: 'w1_r1', text: 'Start Atomic Habits', sub: 'Aim to finish this week or early next', priority: 'medium' },
+        { id: 'w1_r1', text: 'Start 48 Laws of Power', sub: 'Aim to finish before or during the trip', priority: 'medium' },
         { id: 'w1_r2', text: 'Start Spanish warm-up routine', sub: '20 min/day — Duolingo or podcast', priority: 'medium' },
       ]},
       { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
@@ -88,17 +183,20 @@ const weeks = {
       { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
         { id: 'w1_pe1', text: 'Order skincare basics', sub: 'Cleanser, moisturizer, SPF', priority: 'high' },
         { id: 'w1_pe2', text: 'Start wardrobe research', sub: 'Pinterest, He Spoke Style YT — no buying yet', priority: 'low' },
-        { id: 'w1_pe3', text: 'Cook something new this weekend', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w1_ck1', text: 'Learn a mom / Colombian dish', sub: 'Ask her to teach you — document the recipe', priority: 'medium' },
+        { id: 'w1_ck2', text: 'Date dish #1 — Shrimp Aglio e Olio', sub: 'Garlic, olive oil, shrimp, pasta — 20 min, looks impressive', priority: 'low' },
       ]},
     ]
   },
   w2: {
-    label: 'Week 2',
-    dates: 'May 19–27',
+    label: 'Week 2', dates: 'May 20–26',
+    badge: { type: 'pre-trip', icon: '🧳', text: 'Pre-Europe Crunch' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
-        { id: 'w2_p1', text: 'Complete MSF course (May 24–25)', sub: 'Both days — classroom + riding range', priority: 'critical' },
-        { id: 'w2_p2', text: 'Get a haircut before the trip', priority: 'medium' },
+        { id: 'w2_p1', text: 'Get a haircut before the trip', priority: 'medium' },
+        { id: 'w2_p2', text: 'Gym daily — last two weeks before Europe', sub: 'Make the most of being fully mobile', priority: 'high' },
       ]},
       { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
         { id: 'w2_l1', text: 'Finish garage lab setup', sub: 'Should be functional before you leave', priority: 'high' },
@@ -114,6 +212,7 @@ const weeks = {
         { id: 'w2_r1', text: 'Start Models (Manson)', sub: 'Bring it on the trip if not finished', priority: 'medium' },
         { id: 'w2_r2', text: 'Continue Spanish daily', sub: '20 min/day — build the habit before Spain', priority: 'high' },
         { id: 'w2_r3', text: 'Start How to Win Friends & Influence People', sub: 'Fast read, great communication foundations', priority: 'low' },
+        { id: 'w2_r4', text: 'Pick up Atomic Habits when available', sub: 'Check library again', priority: 'low' },
       ]},
       { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
         { id: 'w2_c1', text: 'Singing lesson #1', sub: 'First session this week', priority: 'high' },
@@ -127,21 +226,756 @@ const weeks = {
       { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
         { id: 'w2_pe1', text: 'Order wardrobe pieces for the trip', sub: 'Need time to arrive + return what doesn\'t fit', priority: 'high' },
         { id: 'w2_pe2', text: 'Begin skincare routine daily', sub: 'Morning + night — build the habit now', priority: 'medium' },
-        { id: 'w2_pe3', text: 'Start touch typing practice', sub: '20–30 min/day — keybr.com or typingclub.com', priority: 'low' },
-        { id: 'w2_pe4', text: 'Cook something ambitious this weekend', priority: 'low' },
+        { id: 'w2_pe3', text: 'Start touch typing practice', sub: '20–30 min/day — keybr.com', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w2_ck1', text: 'Learn a second mom / Colombian dish', sub: 'Build the repertoire before you leave', priority: 'medium' },
+        { id: 'w2_ck2', text: 'Date dish #2 — Butter-basted pan seared steak', sub: 'Cast iron, butter + garlic + thyme baste — steakhouse at home', priority: 'low' },
+      ]},
+    ]
+  },
+  w3: {
+    label: 'Week 3', dates: 'May 27–Jun 2',
+    badge: { type: 'travel', icon: '✈️', text: 'Europe — Week 1' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w3_p1', text: 'Walk everywhere — lean into the miles', sub: 'Your built-in cardio for the week', priority: 'low' },
+        { id: 'w3_p2', text: 'Stay hydrated + use sunscreen daily', priority: 'medium' },
+        { id: 'w3_p3', text: 'Try local foods intentionally', sub: 'Experience the cuisine beyond tourist spots', priority: 'low' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w3_l1', text: 'Keep docs + adapters organized', sub: 'Passport, euro cash, key cards — one spot', priority: 'critical' },
+        { id: 'w3_l2', text: 'Track daily expenses (even rough)', sub: 'A note in your phone is enough', priority: 'medium' },
+        { id: 'w3_l3', text: 'Confirm next-leg travel bookings', sub: 'Trains, buses, or flights within Europe', priority: 'high' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w3_t1', text: 'Draft cold emails to UT professors', sub: 'Write while you have headspace — send when home', priority: 'medium' },
+        { id: 'w3_t2', text: 'Jot portfolio ideas as they come', sub: 'Travel = great thinking time', priority: 'low' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w3_r1', text: 'Read on flights + trains', sub: 'Models, 48 Laws, or Never Split — whatever you brought', priority: 'medium' },
+        { id: 'w3_r2', text: 'Spanish immersion — use it every day', sub: 'Order in Spanish, ask for directions', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w3_c1', text: 'Journal the trip daily', sub: 'Voice memos count — capture the details', priority: 'medium' },
+        { id: 'w3_c2', text: 'Look for story material for SK book', sub: 'What moments here are worth writing about?', priority: 'low' },
+        { id: 'w3_c3', text: 'Vocal warmups to stay loose', sub: 'Keep the habit alive without lessons', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w3_pe1', text: 'Buy one quality souvenir (not tourist junk)', sub: 'Something you\'ll actually use or display', priority: 'low' },
+        { id: 'w3_pe2', text: 'Take photos with intention', sub: 'Architecture, food, candids — not just selfies', priority: 'low' },
+      ]},
+    ]
+  },
+  w4: {
+    label: 'Week 4', dates: 'Jun 3–9',
+    badge: { type: 'travel', icon: '🗺️', text: 'Europe — Week 2' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w4_p1', text: 'Stay active — hike or swim if the itinerary allows', priority: 'low' },
+        { id: 'w4_p2', text: 'Prioritize sleep even if nights get late', sub: 'Jet lag compounds — don\'t push through every day', priority: 'medium' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w4_l1', text: 'Plan return logistics', sub: 'Airport transport, check-in times, getting home', priority: 'high' },
+        { id: 'w4_l2', text: 'Review expenses vs. budget', sub: 'Adjust remaining spend if needed', priority: 'medium' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w4_t1', text: 'Finalize professor cold email drafts', sub: 'Ready to send the day you land back home', priority: 'high' },
+        { id: 'w4_t2', text: 'Note 3 ideas to explore in grad school', sub: 'What problems do you want to work on?', priority: 'medium' },
+        { id: 'w4_t3', text: 'Read recent papers from target UT labs', sub: 'Even 30 min on a train is valuable', priority: 'low' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w4_r1', text: 'Finish Models if not done', sub: 'Last push before you land', priority: 'medium' },
+        { id: 'w4_r2', text: 'Start How to Win Friends if Models is done', priority: 'low' },
+        { id: 'w4_r3', text: 'Keep Spanish going daily', sub: 'Even 10 min counts when tired', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w4_c1', text: 'Continue trip journal', sub: 'Especially the surprising or hard moments', priority: 'medium' },
+        { id: 'w4_c2', text: 'Sketch SK book chapter 2 ideas', sub: 'Use the perspective you\'ve gained traveling', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w4_pe1', text: 'Don\'t overshop — stick to your list', sub: 'Luggage weight is real on the way back', priority: 'medium' },
+        { id: 'w4_pe2', text: 'Reflect on what surprised you most', sub: 'Write it down — good material for the future', priority: 'low' },
+      ]},
+    ]
+  },
+  w5: {
+    label: 'Week 5', dates: 'Jun 14–22',
+    badge: { type: 'home', icon: '🏃', text: 'Post-Europe Sprint — Last Mobile Week' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w5_p1', text: 'Go to shooting range', sub: 'Window closes Jun 22 — do this early in the week', priority: 'critical' },
+        { id: 'w5_p2', text: 'Re-establish gym routine', sub: 'Every day you can — surgery stops this Jun 22', priority: 'high' },
+        { id: 'w5_p3', text: 'Beat jet lag in 3 days', sub: 'Morning light, consistent wake time, no naps', priority: 'medium' },
+        { id: 'w5_p4', text: 'Complete HD Rider Course pre-work', sub: 'Online modules — done before Jun 18', priority: 'critical' },
+        { id: 'w5_p5', text: 'HD Rider Course — Day 1 (Jun 18)', sub: 'Classroom + range fundamentals', priority: 'critical' },
+        { id: 'w5_p6', text: 'HD Rider Course — Day 2 (Jun 19)', sub: 'Range skills + completion — get your card', priority: 'critical' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w5_l1', text: 'Unpack + laundry fully', sub: 'Close the loop — don\'t let it sit', priority: 'critical' },
+        { id: 'w5_l2', text: 'Set up recovery station', sub: 'Bedside essentials, chargers, books, desk within reach', priority: 'critical' },
+        { id: 'w5_l3', text: 'Stock up on groceries + supplies', sub: 'You won\'t want to shop right after surgery', priority: 'high' },
+        { id: 'w5_l4', text: 'Review wardrobe pieces that arrived while away', sub: 'Return what doesn\'t work ASAP', priority: 'medium' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w5_t1', text: 'Send cold emails to UT Austin professors', sub: 'You drafted these on the trip — send them now', priority: 'critical' },
+        { id: 'w5_t2', text: 'Portfolio site — resume, push to 50% done', sub: 'Real sections with real content', priority: 'high' },
+        { id: 'w5_t3', text: 'Set up recovery coding environment', sub: 'Laptop, monitors, everything within reach from bed/desk', priority: 'high' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w5_r1', text: 'Continue Spanish daily', sub: 'Coming off immersion — don\'t lose momentum', priority: 'high' },
+        { id: 'w5_r2', text: 'Pick up Atomic Habits if available', sub: 'Perfect recovery read', priority: 'medium' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w5_c1', text: 'Resume singing lessons', sub: 'Schedule session — last one before surgery', priority: 'high' },
+        { id: 'w5_c2', text: 'Edit + organize trip photos', sub: 'Pick best 30–50, back them up', priority: 'low' },
+        { id: 'w5_c3', text: 'Revisit SK book outline with fresh eyes', sub: 'Europe changed your perspective — update it', priority: 'medium' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w5_f1', text: 'Tally total Europe trip spend', sub: 'vs. pre-trip budget — good data for Austin planning', priority: 'high' },
+        { id: 'w5_f2', text: 'Update Austin budget with actual numbers', sub: 'Revise stipend → rent → discretionary breakdown', priority: 'medium' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w5_pe1', text: 'Get back on skincare routine', sub: 'Restart morning + night — travel breaks habits', priority: 'medium' },
+        { id: 'w5_pe2', text: 'Get a great haircut', sub: 'Last one before recovery — make it count', priority: 'medium' },
+        { id: 'w5_pe3', text: 'Resume touch typing practice', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w5_ck1', text: 'Learn another mom / Colombian dish', sub: 'Last chance to cook together before surgery', priority: 'medium' },
+        { id: 'w5_ck2', text: 'Cook a solid meal at home', sub: 'After two weeks of restaurants you\'ll want this', priority: 'low' },
+      ]},
+    ]
+  },
+  w6: {
+    label: 'Week 6', dates: 'Jun 22 – Jul 6',
+    badge: { type: 'austin', icon: '🛌', text: 'Recovery — Bed Rest (Wks 1–2)' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w6_p1', text: 'Follow PT / surgeon instructions strictly', sub: 'No shortcuts — protect the surgery', priority: 'critical' },
+        { id: 'w6_p2', text: 'Daily posture + mobility exercises', sub: '10 min — counteract all the lying down', priority: 'high' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w6_l1', text: 'Catch up on mail + admin from bed', sub: 'Emails, messages, anything backlogged', priority: 'medium' },
+        { id: 'w6_l2', text: 'Set weekly review habit (Fridays)', sub: 'What got done, what to adjust next week', priority: 'medium' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w6_t1', text: 'Python deep learning — start course', sub: 'Laptop on bed — this is your main grind', priority: 'high' },
+        { id: 'w6_t2', text: 'Portfolio site — continue building', sub: 'Aim for 75% done by end of bed rest', priority: 'high' },
+        { id: 'w6_t3', text: 'Follow up on professor emails', sub: 'If no reply after 7–10 days, one polite nudge', priority: 'high' },
+        { id: 'w6_t4', text: 'Read recent UT Austin lab papers', sub: 'Know the work before you arrive', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w6_r1', text: 'Atomic Habits — read + apply', sub: 'Build your recovery routine around its principles', priority: 'high' },
+        { id: 'w6_r2', text: 'Start Intimate Connections (Burns)', sub: 'Dating confidence — perfect bed rest read', priority: 'medium' },
+        { id: 'w6_r3', text: 'Spanish 20 min daily', sub: 'No excuses — easiest habit to keep from bed', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w6_c1', text: 'Singing lessons — remote or seated session', sub: 'Check if teacher can adapt to recovery', priority: 'medium' },
+        { id: 'w6_c2', text: 'SK book — write daily', sub: 'Even a paragraph — momentum matters', priority: 'medium' },
+        { id: 'w6_c3', text: 'Start calligraphy practice', sub: 'Pure desk/bed activity — zero physical demand', priority: 'low' },
+        { id: 'w6_c4', text: 'Record speaking practice videos', sub: '2 min on any topic — watch back, improve', priority: 'low' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w6_f1', text: 'Open brokerage account (Fidelity)', sub: 'Set it up — no buying pressure yet', priority: 'medium' },
+        { id: 'w6_f2', text: 'Research VOO/SPY ETF basics', sub: 'Read, understand, decide if you want to start small', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w6_pe1', text: 'Skincare routine — non-negotiable daily', sub: 'Morning + night, every day', priority: 'high' },
+        { id: 'w6_pe2', text: 'Touch typing — 20 min daily', sub: 'keybr.com — best use of idle recovery time', priority: 'medium' },
+        { id: 'w6_pe3', text: 'Start wardrobe finalization', sub: 'Order + return from bed — no physical effort needed', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w6_ck1', text: 'Plan your date dish rotation for recovery', sub: 'One dish per week — pick from the list', priority: 'medium' },
+        { id: 'w6_ck2', text: 'Watch technique videos from bed', sub: 'Ethan Chlebowski or Kenji López-Alt on YouTube', priority: 'low' },
+      ]},
+    ]
+  },
+  w7: {
+    label: 'Week 7', dates: 'Jul 6–13',
+    badge: { type: 'austin', icon: '💻', text: 'Recovery — Desk Mode (Wk 3–4)' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w7_p1', text: 'Follow PT protocol — no shortcuts', priority: 'critical' },
+        { id: 'w7_p2', text: 'Daily posture + mobility routine', sub: '10–15 min — anterior pelvic tilt + forward head work', priority: 'high' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w7_t1', text: 'ROS fundamentals — start', sub: 'Now that you can sit at a desk properly', priority: 'high' },
+        { id: 'w7_t2', text: 'Python deep learning — continue course', sub: 'Daily sessions, build momentum', priority: 'high' },
+        { id: 'w7_t3', text: 'Portfolio site — push to complete', sub: 'Projects, bio, contact all live', priority: 'critical' },
+        { id: 'w7_t4', text: 'Start voice changer build', sub: 'Bench work — good desk project', priority: 'medium' },
+        { id: 'w7_t5', text: 'Battlebot redesign — CAD planning', sub: 'Design work only, no standing required', priority: 'low' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w7_r1', text: 'Start Storyworthy (Matthew Dicks)', sub: 'Best book on storytelling — dating + public speaking', priority: 'high' },
+        { id: 'w7_r2', text: 'Start Project Hail Mary (Weir)', sub: 'Fiction — you\'ll finish it in days, perfect recovery read', priority: 'medium' },
+        { id: 'w7_r3', text: 'Spanish 20 min daily', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w7_c1', text: 'Singing lessons — weekly sessions', priority: 'high' },
+        { id: 'w7_c2', text: 'Calligraphy — daily practice', sub: '15 min, builds fast', priority: 'medium' },
+        { id: 'w7_c3', text: 'SK book — write 3+ pages this week', priority: 'medium' },
+        { id: 'w7_c4', text: 'Start YouTube channel setup', sub: 'Name, banner, first video concept', priority: 'low' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w7_f1', text: 'Make first ETF purchase if ready', sub: 'Small amount — VOO on Fidelity', priority: 'low' },
+        { id: 'w7_f2', text: 'Confirm Austin stipend start date + amount', sub: 'Know exactly what you\'re working with', priority: 'high' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w7_pe1', text: 'Skincare + touch typing daily', priority: 'high' },
+        { id: 'w7_pe2', text: 'Finalize Austin wardrobe — place final orders', sub: 'Order from bed, no physical effort needed', priority: 'medium' },
+        { id: 'w7_pe3', text: 'Return wardrobe pieces that don\'t fit', sub: 'Do it while you still have time before Austin', priority: 'medium' },
+        { id: 'w7_pe4', text: 'Build a cohesive Austin outfit plan', sub: 'Smart casual base — dark jeans, fitted tees, one good jacket', priority: 'medium' },
+        { id: 'w7_pe5', text: 'Watch Charisma on Command — 2 episodes', sub: 'Apply one thing per video', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w7_ck1', text: 'Date dish #3 — Salmon with lemon cream sauce', sub: 'Pan fry + cream/lemon/garlic sauce — serve over rice', priority: 'medium' },
+        { id: 'w7_ck2', text: 'Learn another mom / Colombian dish', priority: 'medium' },
+      ]},
+    ]
+  },
+  w8: {
+    label: 'Week 8', dates: 'Jul 13–20',
+    badge: { type: 'austin', icon: '🤖', text: 'Recovery — Build Mode (Wk 5)' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w8_p1', text: 'PT protocol — final stretch', sub: 'Clearance for Austin move coming soon', priority: 'critical' },
+        { id: 'w8_p2', text: 'Daily posture routine', priority: 'high' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w8_t1', text: 'ROS — complete core modules', sub: 'Comfortable with basics by end of week', priority: 'high' },
+        { id: 'w8_t2', text: 'Walking robot upgrade — start', sub: 'Desk + bench work', priority: 'high' },
+        { id: 'w8_t3', text: 'Portfolio site — fully done', sub: 'Live, shareable, no excuses', priority: 'critical' },
+        { id: 'w8_t4', text: 'Recreate lab work for UT Austin demos', sub: 'Document everything — photos, video, notes', priority: 'high' },
+        { id: 'w8_t5', text: 'Python deep learning — continue', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w8_r1', text: 'Start The Name of the Wind (Rothfuss)', sub: 'Fiction — immersive fantasy for deep recovery downtime', priority: 'medium' },
+        { id: 'w8_r2', text: 'Start The Subtle Art of Not Giving a F*ck', sub: 'Fast read, motivating', priority: 'medium' },
+        { id: 'w8_r3', text: 'Spanish 20 min daily', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w8_c1', text: 'Singing lessons — weekly', priority: 'high' },
+        { id: 'w8_c2', text: 'Film robot demo footage for YouTube', sub: 'Raw footage — edit later', priority: 'medium' },
+        { id: 'w8_c3', text: 'SK book — meaningful chapter progress', priority: 'medium' },
+        { id: 'w8_c4', text: 'Calligraphy daily', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w8_pe1', text: 'Skincare + touch typing daily', priority: 'high' },
+        { id: 'w8_pe2', text: 'Research Austin neighborhoods seriously', sub: 'West Campus, Hyde Park, East Austin — pick your zone', priority: 'high' },
+        { id: 'w8_pe3', text: 'Research renter\'s insurance', sub: '~$15–20/month — sort before you move', priority: 'medium' },
+        { id: 'w8_pe4', text: 'Finalize wardrobe — edit down to what actually works', sub: 'Donate or return anything you won\'t wear in Austin', priority: 'medium' },
+        { id: 'w8_pe5', text: 'Identify any wardrobe gaps before Austin', sub: 'One good pair of going-out shoes, versatile jacket, etc.', priority: 'low' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w8_ck1', text: 'Date dish #4 — Birria tacos', sub: 'Weekend project — slow braise, consommé for dipping', priority: 'medium' },
+        { id: 'w8_ck2', text: 'Learn another mom / Colombian dish', priority: 'medium' },
+      ]},
+    ]
+  },
+  w9: {
+    label: 'Week 9', dates: 'Jul 20–27',
+    badge: { type: 'austin', icon: '🤘', text: 'Final Week — Austin Countdown' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w9_p1', text: 'Confirm surgeon clearance for travel + move', sub: 'Jul 27 move — make sure you\'re cleared', priority: 'critical' },
+        { id: 'w9_p2', text: 'Light mobility work daily', priority: 'high' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w9_l1', text: 'Pack for Austin move', sub: 'Clothes, gear, laptop setup, lab equipment', priority: 'critical' },
+        { id: 'w9_l2', text: 'Confirm Austin housing', sub: 'Keys, move-in date, utilities set up', priority: 'critical' },
+        { id: 'w9_l3', text: 'Plan the drive to Austin', sub: 'Route, stops, truck packed night before', priority: 'high' },
+        { id: 'w9_l4', text: 'Say goodbye properly', sub: 'Family dinners, see the people you\'ll miss', priority: 'high' },
+        { id: 'w9_l5', text: 'Garage lab — document + store projects', sub: 'Photo everything, clean state for when you\'re back', priority: 'medium' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w9_t1', text: 'Portfolio site — final review', sub: 'Send to someone you trust, get feedback', priority: 'high' },
+        { id: 'w9_t2', text: 'Post first YouTube video', sub: 'Robot demo — even rough is fine', priority: 'medium' },
+        { id: 'w9_t3', text: 'Research statement — solid draft', sub: 'What you want to study at UT and why', priority: 'high' },
+        { id: 'w9_t4', text: 'Python + ROS — consolidate notes', sub: 'Know what to pick up in Austin', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w9_r1', text: 'Finish whatever book you\'re mid', sub: 'Don\'t leave a half-read book behind', priority: 'medium' },
+        { id: 'w9_r2', text: 'Spanish — don\'t break the streak', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w9_c1', text: 'Final singing lesson before Austin', sub: 'Ask teacher for exercises to keep up solo', priority: 'medium' },
+        { id: 'w9_c2', text: 'SK book — finish draft or set clear stopping point', priority: 'medium' },
+        { id: 'w9_c3', text: 'Edit + publish robot YouTube video', priority: 'medium' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w9_f1', text: 'Austin month-1 budget finalized', sub: 'Expenses mapped out before you arrive', priority: 'high' },
+        { id: 'w9_f2', text: 'HYSA + brokerage confirmed active', priority: 'medium' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w9_pe1', text: 'Get a fresh haircut before Austin', priority: 'high' },
+        { id: 'w9_pe2', text: 'Wardrobe fully packed + complete', sub: 'Arrive in Austin with a cohesive, intentional look', priority: 'high' },
+        { id: 'w9_pe3', text: 'Last wardrobe returns completed', sub: 'Don\'t bring stuff you\'re unsure about — return it', priority: 'medium' },
+        { id: 'w9_pe4', text: 'Lay out first-week Austin outfits', sub: 'Know exactly what you\'re wearing to orientation, lab visits, etc.', priority: 'medium' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w9_ck1', text: 'Cook a big family meal before you leave', sub: 'Show off what you learned this summer', priority: 'high' },
+        { id: 'w9_ck2', text: 'Write down all mom recipes you learned', sub: 'Document properly — you\'ll want these in Austin', priority: 'high' },
+        { id: 'w9_ck3', text: 'Date dish #5 — Smash burgers', sub: 'Cook for the family before you go', priority: 'low' },
       ]},
     ]
   }
 };
 
+// ─────────────────────────────────────────────
+// SCHEDULE DATA  (month is 0-indexed: 4=May, 5=June, 6=July)
+// Types: 'critical','high','medium','low','note' → dot + gray bg
+//        'sched-event','sched-travel','sched-milestone','sched-rest' → colored pill
+// dayAccent: null | 'travel-day' | 'milestone-day'
+// ─────────────────────────────────────────────
+const schedule = {
+  w1: { days: [
+    { day:'Wed', m:4, d:13, accent:null, items:[
+      { text:'HD Rider Course confirmed — Jun 18–19 ✅', type:'sched-event', taskId:'w1_p1' },
+      { text:'Unpack Duke boxes', type:'critical', taskId:'w1_l1' },
+      { text:'Open HYSA', type:'high', taskId:'w1_f1' },
+      { text:'Start 48 Laws of Power', type:'medium', taskId:'w1_r1' },
+    ]},
+    { day:'Thu', m:4, d:14, accent:null, items:[
+      { text:'Test all Duke electronics & gear', type:'critical', taskId:'w1_l2' },
+      { text:'Gym', type:'high' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
+    ]},
+    { day:'Fri', m:4, d:15, accent:null, items:[
+      { text:'Reorganize home office', type:'high', taskId:'w1_l3' },
+      { text:'Book first singing lesson', type:'critical', taskId:'w1_c1' },
+      { text:'Order skincare basics', type:'high', taskId:'w1_pe1' },
+      { text:'Gym', type:'high' },
+    ]},
+    { day:'Sat', m:4, d:16, accent:null, items:[
+      { text:'Garage lab — clear + plan layout', type:'high', taskId:'w1_l4' },
+      { text:'Start portfolio site skeleton', type:'high', taskId:'w1_t1' },
+      { text:'Cook mom dish #1', type:'medium', taskId:'w1_ck1' },
+    ]},
+    { day:'Sun', m:4, d:17, accent:null, items:[
+      { text:'Python — install environment', type:'medium', taskId:'w1_t2' },
+      { text:'Draft SK book outline', type:'medium', taskId:'w1_c2' },
+      { text:'Wardrobe research (no buying)', type:'low', taskId:'w1_pe2' },
+      { text:'Shrimp Aglio e Olio — date dish #1', type:'low', taskId:'w1_ck2' },
+    ]},
+    { day:'Mon', m:4, d:18, accent:null, items:[
+      { text:'Gym', type:'high' },
+      { text:'Never Split the Difference — start', type:'low', taskId:'w1_f2' },
+      { text:'Look up shooting ranges near MD', type:'low', taskId:'w1_p2' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
+    ]},
+    { day:'Tue', m:4, d:19, accent:null, items:[
+      { text:'Gym', type:'high' },
+      { text:'Portfolio — meaningful first section', type:'high', taskId:'w1_t1' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
+    ]},
+  ]},
+  w2: { days: [
+    { day:'Wed', m:4, d:20, accent:null, items:[
+      { text:'Gym', type:'high' },
+      { text:'UT Austin professor research', type:'high', taskId:'w2_t2' },
+      { text:'Portfolio — add projects section', type:'high', taskId:'w2_t1' },
+      { text:'Models (Manson) — start', type:'medium', taskId:'w2_r1' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
+    ]},
+    { day:'Thu', m:4, d:21, accent:null, items:[
+      { text:'Gym', type:'high' },
+      { text:'Python — Module 1 starts', type:'medium', taskId:'w2_t3' },
+      { text:'Austin budget draft', type:'medium', taskId:'w2_f2' },
+      { text:'Finish garage lab setup', type:'high', taskId:'w2_l1' },
+      { text:'Touch typing — start (keybr.com)', type:'low', taskId:'w2_pe3' },
+    ]},
+    { day:'Fri', m:4, d:22, accent:null, items:[
+      { text:'Gym', type:'high' },
+      { text:'Order wardrobe pieces for trip', type:'high', taskId:'w2_pe1' },
+      { text:'Pack for Europe — start list', type:'critical', taskId:'w2_l2' },
+      { text:'Download offline Spain resources', type:'medium', taskId:'w2_l3' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
+    ]},
+    { day:'Sat', m:4, d:23, accent:null, items:[
+      { text:'🎵 Singing lesson #1', type:'sched-event', taskId:'w2_c1' },
+      { text:'Continue packing + checklist', type:'high', taskId:'w2_l2' },
+      { text:'Skincare — morning + night', type:'medium', taskId:'w2_pe2' },
+      { text:'Butter-basted steak — date dish #2', type:'low', taskId:'w2_ck2' },
+    ]},
+    { day:'Sun', m:4, d:24, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w2_p2' },
+      { text:'Portfolio — projects section progress', type:'high', taskId:'w2_t1' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
+    ]},
+    { day:'Mon', m:4, d:25, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w2_p2' },
+      { text:'Get haircut before trip', type:'medium', taskId:'w2_p1' },
+      { text:'Skincare — morning + night', type:'medium', taskId:'w2_pe2' },
+      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
+    ]},
+    { day:'Tue', m:4, d:26, accent:null, items:[
+      { text:'Finalize packing', type:'critical', taskId:'w2_l2' },
+      { text:'Confirm all Europe bookings', type:'critical' },
+      { text:'HYSA funded — confirm transfer', type:'high', taskId:'w2_f1' },
+      { text:'Research ETF basics (read only)', type:'low', taskId:'w2_f3' },
+      { text:'Mom / Colombian dish session', type:'medium', taskId:'w2_ck1' },
+    ]},
+  ]},
+  w3: { days: [
+    { day:'Wed', m:4, d:27, accent:null, items:[
+      { text:'Final Europe prep — charge devices', type:'high' },
+      { text:'Print or save offline: tickets, maps', type:'high', taskId:'w3_l1' },
+      { text:'48 Laws / Models — finish or pack it', type:'medium', taskId:'w3_r1' },
+    ]},
+    { day:'Thu', m:4, d:28, accent:'travel-day', items:[
+      { text:'✈️ Depart for Europe', type:'sched-travel' },
+      { text:'Read on the flight', type:'medium', taskId:'w3_r1' },
+      { text:'Track daily expenses', type:'medium', taskId:'w3_l2' },
+    ]},
+    { day:'Fri', m:4, d:29, accent:'travel-day', items:[
+      { text:'Arrive + first city explorations', type:'sched-travel' },
+      { text:'Use Spanish — order food, ask locals', type:'high', taskId:'w3_r2' },
+      { text:'Journal — first impressions', type:'medium', taskId:'w3_c1' },
+      { text:'Track expenses', type:'medium', taskId:'w3_l2' },
+    ]},
+    { day:'Sat', m:4, d:30, accent:'travel-day', items:[
+      { text:'Explore + walk everywhere', type:'sched-travel' },
+      { text:'Spanish immersion', type:'high', taskId:'w3_r2' },
+      { text:'Journal entry + voice memos', type:'medium', taskId:'w3_c1' },
+      { text:'Track expenses', type:'medium', taskId:'w3_l2' },
+    ]},
+    { day:'Sun', m:5, d:31, accent:'travel-day', items:[
+      { text:'Day trip or deeper exploration', type:'sched-travel' },
+      { text:'Read on train/transit', type:'medium', taskId:'w3_r1' },
+      { text:'Spanish', type:'high', taskId:'w3_r2' },
+      { text:'Confirm next-leg travel bookings', type:'high', taskId:'w3_l3' },
+    ]},
+    { day:'Mon', m:5, d:1, accent:'travel-day', items:[
+      { text:'Travel between cities', type:'sched-travel' },
+      { text:'Look for SK book story material', type:'low', taskId:'w3_c2' },
+      { text:'Spanish', type:'high', taskId:'w3_r2' },
+    ]},
+    { day:'Tue', m:5, d:2, accent:'travel-day', items:[
+      { text:'New city — orient + explore', type:'sched-travel' },
+      { text:'Keep docs + adapters organized', type:'medium', taskId:'w3_l1' },
+      { text:'Vocal warmups', type:'low', taskId:'w3_c3' },
+      { text:'Spanish', type:'high', taskId:'w3_r2' },
+    ]},
+  ]},
+  w4: { days: [
+    { day:'Wed', m:5, d:3, accent:'travel-day', items:[
+      { text:'Explore + journal', type:'sched-travel' },
+      { text:'Read Models or How to Win Friends', type:'medium', taskId:'w4_r1' },
+      { text:'Spanish — use it every day', type:'high', taskId:'w4_r3' },
+      { text:'Track expenses vs. budget', type:'medium', taskId:'w4_l2' },
+    ]},
+    { day:'Thu', m:5, d:4, accent:'travel-day', items:[
+      { text:'Cultural site / activity', type:'sched-travel' },
+      { text:'Note 3 grad school ideas', type:'medium', taskId:'w4_t2' },
+      { text:'Spanish', type:'high', taskId:'w4_r3' },
+      { text:'Journal', type:'medium', taskId:'w4_c1' },
+    ]},
+    { day:'Fri', m:5, d:5, accent:'travel-day', items:[
+      { text:'Day trip + photos', type:'sched-travel' },
+      { text:'Spanish', type:'high', taskId:'w4_r3' },
+      { text:'Track expenses', type:'medium', taskId:'w4_l2' },
+      { text:'SK book — write a paragraph', type:'low', taskId:'w4_c2' },
+    ]},
+    { day:'Sat', m:5, d:6, accent:'travel-day', items:[
+      { text:'Explore + enjoy', type:'sched-travel' },
+      { text:'Spanish', type:'high', taskId:'w4_r3' },
+      { text:'Finish Models', type:'medium', taskId:'w4_r1' },
+      { text:'Don\'t overshop — stick to your list', type:'medium', taskId:'w4_pe1' },
+    ]},
+    { day:'Sun', m:5, d:7, accent:'travel-day', items:[
+      { text:'Plan return logistics', type:'high', taskId:'w4_l1' },
+      { text:'Reflect + journal', type:'medium', taskId:'w4_c1' },
+      { text:'Spanish', type:'high', taskId:'w4_r3' },
+    ]},
+    { day:'Mon', m:5, d:8, accent:'travel-day', items:[
+      { text:'Finalize professor cold email drafts', type:'high', taskId:'w4_t1' },
+      { text:'Read recent UT lab papers', type:'medium', taskId:'w4_t3' },
+      { text:'Spanish', type:'high', taskId:'w4_r3' },
+    ]},
+    { day:'Tue', m:5, d:9, accent:'travel-day', items:[
+      { text:'Last full day in Europe 🍷', type:'sched-travel' },
+      { text:'Reflect on trip — what changed?', type:'medium', taskId:'w4_pe2' },
+      { text:'Journal: best memories', type:'medium', taskId:'w4_c1' },
+    ]},
+  ]},
+  w5: { days: [
+    { day:'Sun', m:5, d:14, accent:'travel-day', items:[
+      { text:'✈️ Return flight home', type:'sched-travel' },
+      { text:'Read on flight', type:'low', taskId:'w5_r2' },
+    ]},
+    { day:'Mon', m:5, d:15, accent:null, items:[
+      { text:'Arrive home — unpack + laundry', type:'critical', taskId:'w5_l1' },
+      { text:'Grocery run + stock up for surgery', type:'high', taskId:'w5_l3' },
+      { text:'Easy re-entry', type:'sched-rest' },
+    ]},
+    { day:'Tue', m:5, d:16, accent:null, items:[
+      { text:'Beat jet lag — morning light + early bed', type:'medium', taskId:'w5_p3' },
+      { text:'Send professor emails 🚀', type:'critical', taskId:'w5_t1' },
+      { text:'Spanish — get back on it', type:'high', taskId:'w5_r1' },
+      { text:'HD course — start online pre-work', type:'critical', taskId:'w5_p4' },
+    ]},
+    { day:'Wed', m:5, d:17, accent:null, items:[
+      { text:'Gym — back at it', type:'high', taskId:'w5_p2' },
+      { text:'HD course — finish online pre-work', type:'critical', taskId:'w5_p4' },
+      { text:'Skincare routine restart', type:'medium', taskId:'w5_pe1' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w5_r1' },
+    ]},
+    { day:'Thu', m:5, d:18, accent:'milestone-day', items:[
+      { text:'🏍️ HD Rider Course — Day 1', type:'sched-milestone', taskId:'w5_p5' },
+      { text:'Classroom + range fundamentals', type:'sched-rest' },
+    ]},
+    { day:'Fri', m:5, d:19, accent:'milestone-day', items:[
+      { text:'🏍️ HD Rider Course — Day 2', type:'sched-milestone', taskId:'w5_p6' },
+      { text:'Range skills + get your completion card', type:'sched-rest' },
+    ]},
+    { day:'Sat', m:5, d:20, accent:null, items:[
+      { text:'🎯 Shooting Range', type:'sched-milestone', taskId:'w5_p1' },
+      { text:'🎵 Singing lesson — resume', type:'sched-event', taskId:'w5_c1' },
+      { text:'Edit + organize trip photos', type:'low', taskId:'w5_c2' },
+    ]},
+    { day:'Sun', m:5, d:21, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w5_p2' },
+      { text:'Portfolio resumed — 50% target', type:'high', taskId:'w5_t2' },
+      { text:'Tally Europe spend vs. budget', type:'high', taskId:'w5_f1' },
+      { text:'Update Austin budget', type:'medium', taskId:'w5_f2' },
+      { text:'Review wardrobe pieces from Europe', type:'medium', taskId:'w5_l4' },
+    ]},
+  ]},
+  w6: { days: [
+    { day:'Sun', m:5, d:21, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w5_p2' },
+      { text:'Stock up groceries + supplies pre-surgery', type:'high', taskId:'w5_l3' },
+      { text:'Revisit SK book outline', type:'medium', taskId:'w5_c3' },
+      { text:'Get haircut before surgery', type:'medium', taskId:'w5_pe2' },
+    ]},
+    { day:'Mon', m:5, d:22, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w5_p2' },
+      { text:'Mom cooking session', type:'medium', taskId:'w5_ck1' },
+      { text:'Follow up on professor emails', type:'high', taskId:'w6_t3' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+    ]},
+    { day:'Tue', m:5, d:23, accent:null, items:[
+      { text:'Gym — last few days before surgery', type:'high', taskId:'w5_p2' },
+      { text:'Set up recovery station at home', type:'critical', taskId:'w5_l2' },
+      { text:'Return wardrobe items that don\'t fit', type:'medium', taskId:'w5_l4' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+    ]},
+    { day:'Wed', m:5, d:24, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w5_p2' },
+      { text:'Open brokerage account (Fidelity)', type:'medium', taskId:'w6_f1' },
+      { text:'Read UT Austin lab papers', type:'medium', taskId:'w6_t4' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+    ]},
+    { day:'Thu', m:5, d:25, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w5_p2' },
+      { text:'Confirm all surgery logistics', type:'critical' },
+      { text:'Prep recovery station — books, chargers, water', type:'high', taskId:'w5_l2' },
+      { text:'Skincare — morning + night', type:'high', taskId:'w6_pe1' },
+    ]},
+    { day:'Fri', m:5, d:26, accent:null, items:[
+      { text:'Gym — final session before surgery', type:'high', taskId:'w5_p2' },
+      { text:'Catch up on mail + admin', type:'medium', taskId:'w6_l1' },
+      { text:'Set weekly review habit', type:'medium', taskId:'w6_l2' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+    ]},
+    { day:'Mon', m:5, d:22, accent:'milestone-day', items:[
+      { text:'🏥 Hip Labrum Surgery — Jun 22', type:'sched-milestone' },
+      { text:'Rest — follow all post-op instructions', type:'sched-rest', taskId:'w6_p1' },
+    ]},
+  ]},
+  w7: { days: [
+    { day:'Mon', m:5, d:22, accent:'milestone-day', items:[
+      { text:'🏥 Surgery day — rest completely', type:'sched-milestone' },
+      { text:'PT as prescribed', type:'critical', taskId:'w6_p1' },
+    ]},
+    { day:'Tue', m:5, d:23, accent:null, items:[
+      { text:'PT exercises', type:'critical', taskId:'w6_p1' },
+      { text:'Start Storyworthy from bed', type:'medium', taskId:'w7_r1' },
+      { text:'Skincare', type:'high', taskId:'w6_pe1' },
+    ]},
+    { day:'Wed', m:5, d:24, accent:null, items:[
+      { text:'Morning ritual — coffee, stretch, read', type:'high' },
+      { text:'Python deep learning — first session', type:'high', taskId:'w6_t1' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+      { text:'Posture routine — 10 min', type:'high', taskId:'w6_p2' },
+    ]},
+    { day:'Thu', m:5, d:25, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Portfolio — resume from laptop', type:'critical', taskId:'w6_t2' },
+      { text:'SK book — write from bed', type:'medium', taskId:'w6_c2' },
+      { text:'Posture routine', type:'high', taskId:'w6_p2' },
+    ]},
+    { day:'Fri', m:5, d:26, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Intimate Connections — start', type:'medium', taskId:'w6_r2' },
+      { text:'Skincare', type:'high', taskId:'w6_pe1' },
+      { text:'Touch typing — 20 min', type:'medium', taskId:'w6_pe2' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
+    ]},
+    { day:'Sat', m:5, d:27, accent:null, items:[
+      { text:'Start Project Hail Mary', type:'medium', taskId:'w7_r2' },
+      { text:'Calligraphy practice', type:'medium', taskId:'w6_c3' },
+      { text:'Touch typing', type:'medium', taskId:'w6_pe2' },
+      { text:'Posture routine', type:'high', taskId:'w6_p2' },
+    ]},
+    { day:'Sun', m:5, d:28, accent:null, items:[
+      { text:'Weekly review — what got done?', type:'medium', taskId:'w6_l2' },
+      { text:'ROS fundamentals — start', type:'high', taskId:'w7_t1' },
+      { text:'Wardrobe finalization — order from bed', type:'low', taskId:'w6_pe3' },
+      { text:'Singing lesson — remote session', type:'sched-event', taskId:'w6_c1' },
+    ]},
+  ]},
+  w8: { days: [
+    { day:'Mon', m:5, d:29, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Python deep learning — continue', type:'high', taskId:'w7_t2' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
+      { text:'Posture routine', type:'high', taskId:'w7_p2' },
+      { text:'Skincare', type:'high', taskId:'w7_pe1' },
+    ]},
+    { day:'Tue', m:5, d:30, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Portfolio — push to complete', type:'critical', taskId:'w8_t3' },
+      { text:'Recreate lab work — document everything', type:'high', taskId:'w8_t4' },
+      { text:'Touch typing', type:'high', taskId:'w7_pe1' },
+    ]},
+    { day:'Wed', m:6, d:1, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'ROS — core modules', type:'high', taskId:'w8_t1' },
+      { text:'SK book — 3+ pages', type:'medium', taskId:'w8_c3' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
+      { text:'Posture routine', type:'high', taskId:'w7_p2' },
+    ]},
+    { day:'Thu', m:6, d:2, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Start walking robot upgrade', type:'high', taskId:'w8_t2' },
+      { text:'Film robot demo footage', type:'medium', taskId:'w8_c2' },
+      { text:'Research Austin neighborhoods', type:'high', taskId:'w8_pe2' },
+      { text:'Calligraphy', type:'low', taskId:'w8_c4' },
+    ]},
+    { day:'Fri', m:6, d:3, accent:null, items:[
+      { text:'Weekly review', type:'medium', taskId:'w6_l2' },
+      { text:'Research renter\'s insurance', type:'medium', taskId:'w8_pe3' },
+      { text:'Start The Name of the Wind', type:'medium', taskId:'w8_r1' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
+      { text:'Posture routine', type:'high', taskId:'w7_p2' },
+    ]},
+    { day:'Sat', m:6, d:4, accent:null, items:[
+      { text:'🎵 Singing lesson', type:'sched-event', taskId:'w7_c1' },
+      { text:'Date dish — Salmon with lemon cream sauce', type:'medium', taskId:'w7_ck1' },
+      { text:'Mom / Colombian dish session', type:'medium', taskId:'w7_ck2' },
+      { text:'Finalize wardrobe orders', type:'medium', taskId:'w7_pe2' },
+    ]},
+    { day:'Sun', m:6, d:5, accent:null, items:[
+      { text:'PT + rest', type:'critical', taskId:'w7_p1' },
+      { text:'Confirm Austin stipend details', type:'high', taskId:'w7_f2' },
+      { text:'YouTube channel setup', type:'low', taskId:'w7_c4' },
+      { text:'Build Austin outfit plan', type:'medium', taskId:'w7_pe4' },
+    ]},
+  ]},
+  w9: { days: [
+    { day:'Mon', m:6, d:6, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Research statement — write draft', type:'high', taskId:'w9_t3' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
+      { text:'Posture routine', type:'high', taskId:'w8_p2' },
+      { text:'Skincare', type:'high', taskId:'w8_pe1' },
+    ]},
+    { day:'Tue', m:6, d:7, accent:null, items:[
+      { text:'Morning ritual', type:'high' },
+      { text:'Portfolio — final review, send to someone', type:'high', taskId:'w9_t1' },
+      { text:'Pack for Austin — start', type:'critical', taskId:'w9_l1' },
+      { text:'Last wardrobe returns completed', type:'medium', taskId:'w9_pe3' },
+    ]},
+    { day:'Wed', m:6, d:8, accent:null, items:[
+      { text:'Confirm surgeon clearance for move', type:'critical', taskId:'w9_p1' },
+      { text:'Confirm Austin housing', type:'critical', taskId:'w9_l2' },
+      { text:'Write down all mom recipes', type:'high', taskId:'w9_ck2' },
+      { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
+    ]},
+    { day:'Thu', m:6, d:9, accent:null, items:[
+      { text:'Edit + publish YouTube video 🎬', type:'medium', taskId:'w9_t2' },
+      { text:'Pack gear + lab equipment', type:'high', taskId:'w9_l1' },
+      { text:'Austin month-1 budget finalized', type:'high', taskId:'w9_f1' },
+      { text:'Posture routine', type:'high', taskId:'w8_p2' },
+    ]},
+    { day:'Fri', m:6, d:10, accent:null, items:[
+      { text:'Get haircut before Austin', type:'high', taskId:'w9_pe1' },
+      { text:'Final singing lesson', type:'sched-event', taskId:'w9_c1' },
+      { text:'SK book — finish or set stopping point', type:'medium', taskId:'w9_c2' },
+      { text:'Lay out first-week Austin outfits', type:'medium', taskId:'w9_pe4' },
+    ]},
+    { day:'Sat', m:6, d:11, accent:null, items:[
+      { text:'Garage lab — document + store projects', type:'medium', taskId:'w9_l5' },
+      { text:'Say goodbyes — family + friends', type:'high', taskId:'w9_l4' },
+      { text:'Smash burgers — date dish #5', type:'low', taskId:'w9_pe2' },
+      { text:'HYSA + brokerage confirmed active', type:'medium', taskId:'w9_f2' },
+    ]},
+    { day:'Sun', m:6, d:12, accent:'milestone-day', items:[
+      { text:'🍽️ Big family farewell meal', type:'sched-milestone', taskId:'w9_ck1' },
+      { text:'Truck packed and ready', type:'critical', taskId:'w9_l3' },
+      { text:'🤘 Austin tomorrow', type:'sched-rest' },
+    ]},
+  ]},
+};
+
+// ─────────────────────────────────────────────
+// BOOKS DATA
+// ─────────────────────────────────────────────
+const books = [
+  { id:'b1', emoji:'⚔️', title:'48 Laws of Power', author:'Robert Greene',
+    note:'Started Week 1 — aim to finish before or during the Europe trip.', tag:'reading', section:'In Progress' },
+  { id:'b2', emoji:'🤝', title:'Never Split the Difference', author:'Chris Voss',
+    note:'Negotiation fundamentals. Apply to apartments, salary, everything.', tag:'reading', section:'In Progress' },
+  { id:'b3', emoji:'🧲', title:'Models', author:'Mark Manson',
+    note:'Started Week 2 — bring it to Europe. Great train read.', tag:'trip', section:'In Progress' },
+  { id:'b4', emoji:'🗣️', title:'How to Win Friends & Influence People', author:'Dale Carnegie',
+    note:'Quick read, huge returns. Start Week 2, finish on the trip.', tag:'queued', section:'Up Next' },
+  { id:'b5', emoji:'🔁', title:'Atomic Habits', author:'James Clear',
+    note:'Library hold — pick up during reset week after Europe. Read before Austin.', tag:'queued', section:'Up Next' },
+  { id:'b6', emoji:'🧠', title:'Deep Work', author:'Cal Newport',
+    note:'Essential before UT Austin. How to produce at an elite level.', tag:'queued', section:'Up Next' },
+  { id:'b7', emoji:'🚀', title:'Project Hail Mary', author:'Andy Weir',
+    note:'Fiction — engineering/science flavor, perfect for a roboticist. You\'ll finish it in 2 days.', tag:'queued', section:'Up Next' },
+  { id:'b8', emoji:'💪', title:"Can't Hurt Me", author:'David Goggins',
+    note:'Physical + mental toughness. Great match for recovery grind.', tag:'queued', section:'Later Summer' },
+  { id:'b9', emoji:'📖', title:'The Name of the Wind', author:'Patrick Rothfuss',
+    note:'Fiction — immersive fantasy for deep recovery downtime. Warning: addictive.', tag:'queued', section:'Later Summer' },
+  { id:'b10', emoji:'🌍', title:'Recursion', author:'Blake Crouch',
+    note:'Fiction — fast, mind-bending sci-fi thriller. Great late recovery read.', tag:'queued', section:'Later Summer' },
+  { id:'b11', emoji:'🛸', title:"Ender's Game", author:'Orson Scott Card',
+    note:'Fiction — almost mandatory for STEM people. If you haven\'t read it, fix that.', tag:'queued', section:'Later Summer' },
+  { id:'b12', emoji:'💡', title:"So Good They Can't Ignore You", author:'Cal Newport',
+    note:'Career capital over passion. Direct fit for grad school decision-making.', tag:'queued', section:'Later Summer' },
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let viewMode   = 'tasks';   // 'tasks' | 'schedule' | 'reading'
 let currentWeek = 'w1';
-let checked = {};
+let checked    = {};
 
 function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) checked = JSON.parse(raw);
-  } catch(e) { checked = {}; }
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) checked = JSON.parse(r); } catch(e) { checked = {}; }
+  // auto-jump to current week
+  const today = new Date();
+  const ranges = [
+    { key:'w1', start:[2026,4,13], end:[2026,4,20] },
+    { key:'w2', start:[2026,4,20], end:[2026,4,27] },
+    { key:'w3', start:[2026,4,27], end:[2026,5,3]  },
+    { key:'w4', start:[2026,5,3],  end:[2026,5,14] },
+    { key:'w5', start:[2026,5,14], end:[2026,5,22] },
+    { key:'w6', start:[2026,5,22], end:[2026,6,6]  },
+    { key:'w7', start:[2026,6,6],  end:[2026,6,13] },
+    { key:'w8', start:[2026,6,13], end:[2026,6,20] },
+    { key:'w9', start:[2026,6,20], end:[2026,6,28] },
+  ];
+  for (const r of ranges) {
+    const s = new Date(r.start[0], r.start[1], r.start[2]);
+    const e = new Date(r.end[0],   r.end[1],   r.end[2]+1);
+    if (today >= s && today < e) { currentWeek = r.key; break; }
+  }
   render();
 }
 
@@ -149,48 +983,62 @@ function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); } catch(e) {}
 }
 
-function toggleTask(id) {
-  checked[id] = !checked[id];
-  saveState();
-  render();
+function toggleTask(id) { checked[id] = !checked[id]; saveState(); render(); }
+function setView(v)    { viewMode = v; render(); }
+function setWeek(k)    { currentWeek = k; render(); }
+
+function getWeekProgress(wk) {
+  const w = weeks[wk]; let total=0,done=0;
+  w.categories.forEach(c => c.tasks.forEach(t => { total++; if(checked[t.id]) done++; }));
+  return {total,done};
 }
 
-function switchWeek(key) {
-  currentWeek = key;
-  render();
+function isToday(m, d) {
+  const t = new Date(); return t.getMonth()===m && t.getDate()===d;
 }
 
-function getProgress(weekKey) {
-  const week = weeks[weekKey];
-  let total = 0, done = 0;
-  week.categories.forEach(cat => cat.tasks.forEach(t => { total++; if (checked[t.id]) done++; }));
-  return { total, done };
+// ─────────────────────────────────────────────
+// RENDER: shared nav
+// ─────────────────────────────────────────────
+function renderNav() {
+  const weekBtns = Object.entries(weeks).map(([k,w]) => {
+    const {done,total} = getWeekProgress(k);
+    return `<button class="week-btn${k===currentWeek?' active':''}" onclick="setWeek('${k}')">${w.label} <span class="wdates">${w.dates}</span></button>`;
+  }).join('');
+
+  return `
+    <div class="view-nav">
+      <button class="view-btn${viewMode==='tasks'?' active':''}"    onclick="setView('tasks')">📋 Tasks</button>
+      <button class="view-btn${viewMode==='schedule'?' active':''}" onclick="setView('schedule')">📅 Schedule</button>
+      <button class="view-btn reading-btn${viewMode==='reading'?' active':''}" onclick="setView('reading')">📚 Reading List</button>
+    </div>
+    ${viewMode!=='reading' ? `<div class="week-nav">${weekBtns}</div>` : ''}
+  `;
 }
 
-function render() {
+// ─────────────────────────────────────────────
+// RENDER: Tasks view
+// ─────────────────────────────────────────────
+function renderTasks() {
   const week = weeks[currentWeek];
-  const { total, done } = getProgress(currentWeek);
-  const pct = total ? Math.round((done/total)*100) : 0;
+  const {total,done} = getWeekProgress(currentWeek);
+  const pct = total ? Math.round(done/total*100) : 0;
+  const badge = week.badge;
 
   let html = `
-    <div class="week-selector">
-      ${Object.entries(weeks).map(([key, w]) => `
-        <button class="week-btn ${key === currentWeek ? 'active' : ''}" onclick="switchWeek('${key}')">${w.label} &nbsp;<span style="font-size:11px;opacity:0.6;">${w.dates}</span></button>
-      `).join('')}
-    </div>
+    <div class="week-badge ${badge.type}">${badge.icon} ${badge.text}</div>
     <div class="status-bar"><strong>${done}/${total}</strong> tasks done · <strong>${pct}%</strong> complete</div>
     <div class="legend">
-      <div class="leg"><div class="leg-dot" style="background:#E24B4A;"></div>Critical</div>
-      <div class="leg"><div class="leg-dot" style="background:#BA7517;"></div>High</div>
-      <div class="leg"><div class="leg-dot" style="background:#378ADD;"></div>Medium</div>
-      <div class="leg"><div class="leg-dot" style="background:#639922;"></div>Low</div>
+      <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>Critical</div>
+      <div class="leg"><div class="leg-dot" style="background:#BA7517"></div>High</div>
+      <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>Medium</div>
+      <div class="leg"><div class="leg-dot" style="background:#639922"></div>Low</div>
     </div>
-    <div class="grid">
-  `;
+    <div class="grid">`;
 
   week.categories.forEach(cat => {
     const catDone = cat.tasks.filter(t => checked[t.id]).length;
-    const catPct = cat.tasks.length ? (catDone / cat.tasks.length) * 100 : 0;
+    const catPct  = cat.tasks.length ? (catDone/cat.tasks.length)*100 : 0;
     html += `
       <div class="card">
         <div class="card-header">
@@ -199,28 +1047,152 @@ function render() {
           <span class="card-count">${catDone}/${cat.tasks.length}</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${catPct}%"></div></div>
-        <div class="task-list">
-          ${cat.tasks.map(t => `
-            <div class="task-item ${checked[t.id] ? 'done' : ''}" onclick="toggleTask('${t.id}')">
-              <div class="checkbox">
-                <svg class="checkmark" width="9" height="9" viewBox="0 0 9 9" fill="none">
-                  <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <div class="dot dot-${t.priority}"></div>
-              <div class="task-content">
-                <div class="task-text">${t.text}</div>
-                ${t.sub ? `<div class="task-sub">${t.sub}</div>` : ''}
-              </div>
+        <div class="task-list">`;
+    cat.tasks.forEach(t => {
+      html += `
+          <div class="task-item${checked[t.id]?' done':''}" onclick="toggleTask('${t.id}')">
+            <div class="checkbox">
+              <svg class="checkmark" width="9" height="9" viewBox="0 0 9 9" fill="none">
+                <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-          `).join('')}
-        </div>
+            <div class="dot dot-${t.priority}"></div>
+            <div class="task-content">
+              <div class="task-text">${t.text}</div>
+              ${t.sub?`<div class="task-sub">${t.sub}</div>`:''}
+            </div>
+          </div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ─────────────────────────────────────────────
+// RENDER: Schedule view
+// ─────────────────────────────────────────────
+function renderSchedule() {
+  const week = weeks[currentWeek];
+  const sched = schedule[currentWeek];
+  const badge = week.badge;
+
+  function monthLabel(m) {
+    if (m===4) return 'May';
+    if (m===5) return 'Jun';
+    if (m===6) return 'Jul';
+    return '';
+  }
+
+  let html = `
+    <div class="week-badge ${badge.type}">${badge.icon} ${badge.text}</div>
+    <div class="schedule-grid">`;
+
+  sched.days.forEach(day => {
+    const today = isToday(day.m, day.d);
+    const accentClass = day.accent ? ` ${day.accent}` : '';
+    const todayClass  = today ? ' is-today' : '';
+    html += `<div class="day-col${accentClass}${todayClass}">
+      <div class="day-header">
+        <div class="day-name">${day.day}</div>
+        <div class="day-date">${monthLabel(day.m)} ${day.d}</div>
+        <div class="today-pip">Today</div>
       </div>
-    `;
+      <div class="day-items">`;
+
+    day.items.forEach(item => {
+      const isLinked = !!item.taskId;
+      const isDone   = isLinked && !!checked[item.taskId];
+
+      if (['sched-event','sched-travel','sched-milestone','sched-rest'].includes(item.type)) {
+        if (isLinked) {
+          // Linked event pill — clickable, shows checkmark when done
+          html += `<div class="day-item ${item.type}${isDone?' sched-done':''}" onclick="toggleTask('${item.taskId}')" style="cursor:pointer;display:flex;align-items:flex-start;gap:6px;">
+            <div class="sched-cb${isDone?' sched-cb-done':''}">
+              ${isDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+            </div>
+            <span class="sched-item-text"${isDone?' style="text-decoration:line-through;opacity:0.5"':''}>${item.text}</span>
+          </div>`;
+        } else {
+          html += `<div class="day-item ${item.type}"><span class="sched-item-text">${item.text}</span></div>`;
+        }
+      } else {
+        if (isLinked) {
+          // Linked task item — clickable checkbox
+          html += `<div class="day-item sched-task${isDone?' sched-done':''}" onclick="toggleTask('${item.taskId}')" style="cursor:pointer;">
+            <div class="sched-cb${isDone?' sched-cb-done':''}">
+              ${isDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+            </div>
+            <span class="sched-item-text"${isDone?' style="text-decoration:line-through;opacity:0.5"':''}>${item.text}</span>
+          </div>`;
+        } else {
+          html += `<div class="day-item sched-task"><span class="sched-dot ${item.type}"></span><span class="sched-item-text">${item.text}</span></div>`;
+        }
+      }
+    });
+
+    html += `</div></div>`;
   });
 
   html += `</div>`;
-  document.getElementById('app').innerHTML = html;
+  return html;
+}
+
+// ─────────────────────────────────────────────
+// RENDER: Reading List view
+// ─────────────────────────────────────────────
+function renderReading() {
+  const total = books.length;
+  const done  = books.filter(b => checked[b.id]).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+
+  let html = `
+    <div class="reading-list-view">
+    <div class="reading-progress-summary">
+      <div class="rps-stat"><div class="rps-num">${done}</div><div class="rps-label">Finished</div></div>
+      <div class="rps-stat"><div class="rps-num">${total-done}</div><div class="rps-label">Remaining</div></div>
+      <div class="rps-bar-wrap">
+        <div class="rps-bar-label">Summer reading · ${pct}%</div>
+        <div class="rps-bar"><div class="rps-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+
+  ['In Progress','Up Next','Later Summer'].forEach(section => {
+    const list = books.filter(b => b.section === section);
+    if (!list.length) return;
+    html += `<div class="reading-section-title">${section}</div>`;
+    list.forEach(b => {
+      const isDone = !!checked[b.id];
+      const tagClass = isDone ? 'done' : b.tag;
+      const tagText  = isDone ? 'Finished ✓' : (b.tag==='reading'?'Reading now':b.tag==='trip'?'Bring on trip':'Queued');
+      html += `
+        <div class="book-card${isDone?' done':''}" onclick="toggleTask('${b.id}')">
+          <div class="book-emoji">${b.emoji}</div>
+          <div class="book-info">
+            <div class="book-title">${b.title}</div>
+            <div class="book-author">${b.author}</div>
+            <div class="book-note">${b.note}</div>
+          </div>
+          <div class="book-status">
+            <div class="book-checkbox">${isDone?`<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}</div>
+            <span class="book-tag tag-${tagClass}">${tagText}</span>
+          </div>
+        </div>`;
+    });
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ─────────────────────────────────────────────
+// MAIN RENDER
+// ─────────────────────────────────────────────
+function render() {
+  let content = '';
+  if      (viewMode === 'tasks')    content = renderTasks();
+  else if (viewMode === 'schedule') content = renderSchedule();
+  else                              content = renderReading();
+  document.getElementById('app').innerHTML = renderNav() + content;
 }
 
 loadState();
