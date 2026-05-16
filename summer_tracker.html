@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer 2026 Task Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f8f5; color: #1a1a18; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .week-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+  .week-btn { padding: 7px 20px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; color: #666; background: #fff; transition: all 0.15s; }
+  .week-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; font-weight: 500; }
+  .status-bar { font-size: 13px; color: #666; margin-bottom: 14px; }
+  .status-bar strong { color: #1a1a18; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
+  .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .card { border-radius: 12px; border: 1px solid #e8e6e0; background: #fff; overflow: hidden; }
+  .card-header { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0ede6; }
+  .card-icon { font-size: 16px; }
+  .card-title { font-size: 13px; font-weight: 500; }
+  .card-count { margin-left: auto; font-size: 11px; color: #aaa; }
+  .progress-bar { height: 3px; background: #f0ede6; margin: 0 14px 8px; border-radius: 2px; }
+  .progress-fill { height: 100%; border-radius: 2px; background: #1a1a18; transition: width 0.3s; }
+  .task-list { padding: 4px 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .task-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 6px; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
+  .task-item:hover { background: #f9f8f5; }
+  .task-item.done .task-text { text-decoration: line-through; color: #bbb; }
+  .task-item.done .task-sub { color: #ccc; }
+  .checkbox { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid #ccc; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .task-item.done .checkbox { background: #1a1a18; border-color: #1a1a18; }
+  .checkmark { display: none; }
+  .task-item.done .checkmark { display: block; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot-critical { background: #E24B4A; }
+  .dot-high { background: #BA7517; }
+  .dot-medium { background: #378ADD; }
+  .dot-low { background: #639922; }
+  .task-content { flex: 1; min-width: 0; }
+  .task-text { font-size: 12px; line-height: 1.35; }
+  .task-sub { font-size: 10px; color: #999; margin-top: 2px; line-height: 1.3; }
+</style>
+</head>
+<body>
+
+<h1>Summer 2026</h1>
+<p class="subtitle">Pre-Europe trip tasks · check off as you go</p>
+<div id="app"></div>
+
+<script>
+const STORAGE_KEY = 'summer26_checked_v1';
+
+const weeks = {
+  w1: {
+    label: 'Week 1',
+    dates: 'May 13–18',
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w1_p1', text: 'Book MSF course for May 24–25', sub: 'Do this today — courses fill fast', priority: 'critical' },
+        { id: 'w1_p2', text: 'Look up shooting ranges near MD', sub: 'For the June 14–22 window', priority: 'low' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w1_l1', text: 'Unpack all Duke boxes', sub: 'Sort keep / store / toss', priority: 'critical' },
+        { id: 'w1_l2', text: 'Test all Duke electronics + gear', sub: 'Inventory what works', priority: 'critical' },
+        { id: 'w1_l3', text: 'Reorganize home office', sub: 'Desk, shelving, cable management', priority: 'high' },
+        { id: 'w1_l4', text: 'Start garage lab — clear + plan layout', sub: 'Get space functional before trip', priority: 'high' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w1_t1', text: 'Start portfolio site', sub: 'Pick stack, get a skeleton live', priority: 'high' },
+        { id: 'w1_t2', text: 'Python — install environment', sub: 'Just set it up, no pressure to go deep', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w1_r1', text: 'Start Atomic Habits', sub: 'Aim to finish this week or early next', priority: 'medium' },
+        { id: 'w1_r2', text: 'Start Spanish warm-up routine', sub: '20 min/day — Duolingo or podcast', priority: 'medium' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w1_c1', text: 'Book first singing lesson', sub: 'Find a local teacher, schedule ASAP', priority: 'critical' },
+        { id: 'w1_c2', text: 'Draft SK book outline', sub: 'Rough structure — chapters, key stories', priority: 'medium' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w1_f1', text: 'Open a High Yield Savings Account', sub: 'Ally, Marcus, or SoFi — takes 15 min', priority: 'high' },
+        { id: 'w1_f2', text: 'Start Never Split the Difference', sub: 'Negotiation basics — fast read', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w1_pe1', text: 'Order skincare basics', sub: 'Cleanser, moisturizer, SPF', priority: 'high' },
+        { id: 'w1_pe2', text: 'Start wardrobe research', sub: 'Pinterest, He Spoke Style YT — no buying yet', priority: 'low' },
+        { id: 'w1_pe3', text: 'Cook something new this weekend', priority: 'low' },
+      ]},
+    ]
+  },
+  w2: {
+    label: 'Week 2',
+    dates: 'May 19–27',
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w2_p1', text: 'Complete MSF course (May 24–25)', sub: 'Both days — classroom + riding range', priority: 'critical' },
+        { id: 'w2_p2', text: 'Get a haircut before the trip', priority: 'medium' },
+      ]},
+      { id: 'logistics', icon: '🔧', title: 'Logistics', tasks: [
+        { id: 'w2_l1', text: 'Finish garage lab setup', sub: 'Should be functional before you leave', priority: 'high' },
+        { id: 'w2_l2', text: 'Pack for Europe', sub: 'Adapters, chargers, cash, meds — start early', priority: 'critical' },
+        { id: 'w2_l3', text: 'Download Spanish resources for offline', sub: 'Podcasts, vocab lists for Spain leg', priority: 'medium' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w2_t1', text: 'Portfolio site — meaningful progress', sub: 'Real content or structure by departure', priority: 'high' },
+        { id: 'w2_t2', text: 'Identify 2–3 UT Austin professors', sub: 'Research labs, note recent papers — no email yet', priority: 'high' },
+        { id: 'w2_t3', text: 'Python — first module started', sub: 'Just get momentum going', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w2_r1', text: 'Start Models (Manson)', sub: 'Bring it on the trip if not finished', priority: 'medium' },
+        { id: 'w2_r2', text: 'Continue Spanish daily', sub: '20 min/day — build the habit before Spain', priority: 'high' },
+        { id: 'w2_r3', text: 'Start How to Win Friends & Influence People', sub: 'Fast read, great communication foundations', priority: 'low' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w2_c1', text: 'Singing lesson #1', sub: 'First session this week', priority: 'high' },
+        { id: 'w2_c2', text: 'SK book — write first section', priority: 'low' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w2_f1', text: 'HYSA open + funded', sub: 'Transfer your buffer money in', priority: 'high' },
+        { id: 'w2_f2', text: 'Draft simple Austin budget', sub: 'Stipend in, rent + expenses out', priority: 'medium' },
+        { id: 'w2_f3', text: 'Research ETF basics', sub: 'VOO/SPY on Fidelity — read, no buying yet', priority: 'low' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w2_pe1', text: 'Order wardrobe pieces for the trip', sub: 'Need time to arrive + return what doesn\'t fit', priority: 'high' },
+        { id: 'w2_pe2', text: 'Begin skincare routine daily', sub: 'Morning + night — build the habit now', priority: 'medium' },
+        { id: 'w2_pe3', text: 'Start touch typing practice', sub: '20–30 min/day — keybr.com or typingclub.com', priority: 'low' },
+        { id: 'w2_pe4', text: 'Cook something ambitious this weekend', priority: 'low' },
+      ]},
+    ]
+  }
+};
+
+let currentWeek = 'w1';
+let checked = {};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) checked = JSON.parse(raw);
+  } catch(e) { checked = {}; }
+  render();
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); } catch(e) {}
+}
+
+function toggleTask(id) {
+  checked[id] = !checked[id];
+  saveState();
+  render();
+}
+
+function switchWeek(key) {
+  currentWeek = key;
+  render();
+}
+
+function getProgress(weekKey) {
+  const week = weeks[weekKey];
+  let total = 0, done = 0;
+  week.categories.forEach(cat => cat.tasks.forEach(t => { total++; if (checked[t.id]) done++; }));
+  return { total, done };
+}
+
+function render() {
+  const week = weeks[currentWeek];
+  const { total, done } = getProgress(currentWeek);
+  const pct = total ? Math.round((done/total)*100) : 0;
+
+  let html = `
+    <div class="week-selector">
+      ${Object.entries(weeks).map(([key, w]) => `
+        <button class="week-btn ${key === currentWeek ? 'active' : ''}" onclick="switchWeek('${key}')">${w.label} &nbsp;<span style="font-size:11px;opacity:0.6;">${w.dates}</span></button>
+      `).join('')}
+    </div>
+    <div class="status-bar"><strong>${done}/${total}</strong> tasks done · <strong>${pct}%</strong> complete</div>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:#E24B4A;"></div>Critical</div>
+      <div class="leg"><div class="leg-dot" style="background:#BA7517;"></div>High</div>
+      <div class="leg"><div class="leg-dot" style="background:#378ADD;"></div>Medium</div>
+      <div class="leg"><div class="leg-dot" style="background:#639922;"></div>Low</div>
+    </div>
+    <div class="grid">
+  `;
+
+  week.categories.forEach(cat => {
+    const catDone = cat.tasks.filter(t => checked[t.id]).length;
+    const catPct = cat.tasks.length ? (catDone / cat.tasks.length) * 100 : 0;
+    html += `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">${cat.icon}</span>
+          <span class="card-title">${cat.title}</span>
+          <span class="card-count">${catDone}/${cat.tasks.length}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${catPct}%"></div></div>
+        <div class="task-list">
+          ${cat.tasks.map(t => `
+            <div class="task-item ${checked[t.id] ? 'done' : ''}" onclick="toggleTask('${t.id}')">
+              <div class="checkbox">
+                <svg class="checkmark" width="9" height="9" viewBox="0 0 9 9" fill="none">
+                  <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="dot dot-${t.priority}"></div>
+              <div class="task-content">
+                <div class="task-text">${t.text}</div>
+                ${t.sub ? `<div class="task-sub">${t.sub}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  document.getElementById('app').innerHTML = html;
+}
+
+loadState();
+</script>
+</body>
+</html>
