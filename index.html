@@ -119,6 +119,12 @@
   .gym-bar-block { width:30px; height:8px; border-radius:4px; background:#e8e6e0; transition:background 0.2s; }
   .gym-bar-block.filled { background:#378ADD; }
   .gym-strip-count { font-size:12px; font-weight:600; color:#378ADD; }
+  .spanish-cb.spanish-cb-done { background:#d97706; border-color:#d97706; }
+  .spanish-strip-count { font-size:12px; font-weight:600; color:#d97706; }
+  .spanish-bar-block.filled { background:#d97706; }
+  .reading-cb.reading-cb-done { background:#7c3aed; border-color:#7c3aed; }
+  .reading-strip-count { font-size:12px; font-weight:600; color:#7c3aed; }
+  .reading-bar-block.filled { background:#7c3aed; }
 
   /* ── Reading list ── */
   .reading-list-view { display: flex; flex-direction: column; gap: 10px; }
@@ -160,8 +166,12 @@
 const STORAGE_KEY = 'summer26_v3';
 const SCHED_KEY   = 'summer26_sched_v1';
 const GYM_KEY     = 'summer26_gym_v1';
+const SPANISH_KEY = 'summer26_spanish_v1';
+const READING_KEY = 'summer26_reading_v1';
 let scheduleState;
 let gymState = {};
+let spanishState = {};
+let readingState = {};
 let dragSrc = null;
 
 function loadScheduleState() {
@@ -198,6 +208,46 @@ function toggleGym(wk, dayIdx) {
   if (!Array.isArray(gymState[wk])) gymState[wk] = [];
   gymState[wk][dayIdx] = !gymState[wk][dayIdx];
   saveGymState();
+  render();
+}
+
+function loadSpanishState() {
+  try {
+    const saved = localStorage.getItem(SPANISH_KEY);
+    spanishState = saved ? JSON.parse(saved) : {};
+  } catch(e) { spanishState = {}; }
+  Object.keys(schedule).forEach(wk => {
+    if (!Array.isArray(spanishState[wk]) || spanishState[wk].length !== schedule[wk].days.length)
+      spanishState[wk] = schedule[wk].days.map(() => false);
+  });
+}
+function saveSpanishState() {
+  try { localStorage.setItem(SPANISH_KEY, JSON.stringify(spanishState)); } catch(e) {}
+}
+function toggleSpanish(wk, dayIdx) {
+  if (!Array.isArray(spanishState[wk])) spanishState[wk] = [];
+  spanishState[wk][dayIdx] = !spanishState[wk][dayIdx];
+  saveSpanishState();
+  render();
+}
+
+function loadReadingState() {
+  try {
+    const saved = localStorage.getItem(READING_KEY);
+    readingState = saved ? JSON.parse(saved) : {};
+  } catch(e) { readingState = {}; }
+  Object.keys(schedule).forEach(wk => {
+    if (!Array.isArray(readingState[wk]) || readingState[wk].length !== schedule[wk].days.length)
+      readingState[wk] = schedule[wk].days.map(() => false);
+  });
+}
+function saveReadingState() {
+  try { localStorage.setItem(READING_KEY, JSON.stringify(readingState)); } catch(e) {}
+}
+function toggleReading(wk, dayIdx) {
+  if (!Array.isArray(readingState[wk])) readingState[wk] = [];
+  readingState[wk][dayIdx] = !readingState[wk][dayIdx];
+  saveReadingState();
   render();
 }
 
@@ -618,14 +668,11 @@ const schedule = {
     ]},
     { day:'Thu', m:4, d:14, accent:null, items:[
       { text:'Test all Duke electronics & gear', type:'critical', taskId:'w1_l2' },
-      { text:'Gym', type:'high' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
     ]},
     { day:'Fri', m:4, d:15, accent:null, items:[
       { text:'Reorganize home office', type:'high', taskId:'w1_l3' },
       { text:'Book first singing lesson', type:'critical', taskId:'w1_c1' },
       { text:'Order skincare basics', type:'high', taskId:'w1_pe1' },
-      { text:'Gym', type:'high' },
     ]},
     { day:'Sat', m:4, d:16, accent:null, items:[
       { text:'Garage lab — clear + plan layout', type:'high', taskId:'w1_l4' },
@@ -639,38 +686,29 @@ const schedule = {
       { text:'Shrimp Aglio e Olio — date dish #1', type:'low', taskId:'w1_ck2' },
     ]},
     { day:'Mon', m:4, d:18, accent:null, items:[
-      { text:'Gym', type:'high' },
       { text:'Never Split the Difference — start', type:'low', taskId:'w1_f2' },
       { text:'Look up shooting ranges near MD', type:'low', taskId:'w1_p2' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
     ]},
     { day:'Tue', m:4, d:19, accent:null, items:[
-      { text:'Gym', type:'high' },
       { text:'Portfolio — meaningful first section', type:'high', taskId:'w1_t1' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w1_r2' },
     ]},
   ]},
   w2: { days: [
     { day:'Wed', m:4, d:20, accent:null, items:[
-      { text:'Gym', type:'high' },
       { text:'UT Austin professor research', type:'high', taskId:'w2_t2' },
       { text:'Portfolio — add projects section', type:'high', taskId:'w2_t1' },
       { text:'Models (Manson) — start', type:'medium', taskId:'w2_r1' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
     ]},
     { day:'Thu', m:4, d:21, accent:null, items:[
-      { text:'Gym', type:'high' },
       { text:'Python — Module 1 starts', type:'medium', taskId:'w2_t3' },
       { text:'Austin budget draft', type:'medium', taskId:'w2_f2' },
       { text:'Finish garage lab setup', type:'high', taskId:'w2_l1' },
       { text:'Touch typing — start (keybr.com)', type:'low', taskId:'w2_pe3' },
     ]},
     { day:'Fri', m:4, d:22, accent:null, items:[
-      { text:'Gym', type:'high' },
       { text:'Order wardrobe pieces for trip', type:'high', taskId:'w2_pe1' },
       { text:'Pack for Europe — start list', type:'critical', taskId:'w2_l2' },
       { text:'Download offline Spain resources', type:'medium', taskId:'w2_l3' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
     ]},
     { day:'Sat', m:4, d:23, accent:null, items:[
       { text:'🎵 Singing lesson #1', type:'sched-event', taskId:'w2_c1' },
@@ -679,15 +717,11 @@ const schedule = {
       { text:'Butter-basted steak — date dish #2', type:'low', taskId:'w2_ck2' },
     ]},
     { day:'Sun', m:4, d:24, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w2_p2' },
       { text:'Portfolio — projects section progress', type:'high', taskId:'w2_t1' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
     ]},
     { day:'Mon', m:4, d:25, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w2_p2' },
       { text:'Get haircut before trip', type:'medium', taskId:'w2_p1' },
       { text:'Skincare — morning + night', type:'medium', taskId:'w2_pe2' },
-      { text:'Spanish — 20 min', type:'medium', taskId:'w2_r2' },
     ]},
     { day:'Tue', m:4, d:26, accent:null, items:[
       { text:'Finalize packing', type:'critical', taskId:'w2_l2' },
@@ -710,68 +744,57 @@ const schedule = {
     ]},
     { day:'Fri', m:4, d:29, accent:'travel-day', items:[
       { text:'Arrive + first city explorations', type:'sched-travel' },
-      { text:'Use Spanish — order food, ask locals', type:'high', taskId:'w3_r2' },
       { text:'Journal — first impressions', type:'medium', taskId:'w3_c1' },
       { text:'Track expenses', type:'medium', taskId:'w3_l2' },
     ]},
     { day:'Sat', m:4, d:30, accent:'travel-day', items:[
       { text:'Explore + walk everywhere', type:'sched-travel' },
-      { text:'Spanish immersion', type:'high', taskId:'w3_r2' },
       { text:'Journal entry + voice memos', type:'medium', taskId:'w3_c1' },
       { text:'Track expenses', type:'medium', taskId:'w3_l2' },
     ]},
     { day:'Sun', m:5, d:31, accent:'travel-day', items:[
       { text:'Day trip or deeper exploration', type:'sched-travel' },
       { text:'Read on train/transit', type:'medium', taskId:'w3_r1' },
-      { text:'Spanish', type:'high', taskId:'w3_r2' },
       { text:'Confirm next-leg travel bookings', type:'high', taskId:'w3_l3' },
     ]},
     { day:'Mon', m:5, d:1, accent:'travel-day', items:[
       { text:'Travel between cities', type:'sched-travel' },
       { text:'Look for SK book story material', type:'low', taskId:'w3_c2' },
-      { text:'Spanish', type:'high', taskId:'w3_r2' },
     ]},
     { day:'Tue', m:5, d:2, accent:'travel-day', items:[
       { text:'New city — orient + explore', type:'sched-travel' },
       { text:'Keep docs + adapters organized', type:'medium', taskId:'w3_l1' },
       { text:'Vocal warmups', type:'low', taskId:'w3_c3' },
-      { text:'Spanish', type:'high', taskId:'w3_r2' },
     ]},
   ]},
   w4: { days: [
     { day:'Wed', m:5, d:3, accent:'travel-day', items:[
       { text:'Explore + journal', type:'sched-travel' },
       { text:'Read Models or How to Win Friends', type:'medium', taskId:'w4_r1' },
-      { text:'Spanish — use it every day', type:'high', taskId:'w4_r3' },
       { text:'Track expenses vs. budget', type:'medium', taskId:'w4_l2' },
     ]},
     { day:'Thu', m:5, d:4, accent:'travel-day', items:[
       { text:'Cultural site / activity', type:'sched-travel' },
       { text:'Note 3 grad school ideas', type:'medium', taskId:'w4_t2' },
-      { text:'Spanish', type:'high', taskId:'w4_r3' },
       { text:'Journal', type:'medium', taskId:'w4_c1' },
     ]},
     { day:'Fri', m:5, d:5, accent:'travel-day', items:[
       { text:'Day trip + photos', type:'sched-travel' },
-      { text:'Spanish', type:'high', taskId:'w4_r3' },
       { text:'Track expenses', type:'medium', taskId:'w4_l2' },
       { text:'SK book — write a paragraph', type:'low', taskId:'w4_c2' },
     ]},
     { day:'Sat', m:5, d:6, accent:'travel-day', items:[
       { text:'Explore + enjoy', type:'sched-travel' },
-      { text:'Spanish', type:'high', taskId:'w4_r3' },
       { text:'Finish Models', type:'medium', taskId:'w4_r1' },
       { text:'Don\'t overshop — stick to your list', type:'medium', taskId:'w4_pe1' },
     ]},
     { day:'Sun', m:5, d:7, accent:'travel-day', items:[
       { text:'Plan return logistics', type:'high', taskId:'w4_l1' },
       { text:'Reflect + journal', type:'medium', taskId:'w4_c1' },
-      { text:'Spanish', type:'high', taskId:'w4_r3' },
     ]},
     { day:'Mon', m:5, d:8, accent:'travel-day', items:[
       { text:'Finalize professor cold email drafts', type:'high', taskId:'w4_t1' },
       { text:'Read recent UT lab papers', type:'medium', taskId:'w4_t3' },
-      { text:'Spanish', type:'high', taskId:'w4_r3' },
     ]},
     { day:'Tue', m:5, d:9, accent:'travel-day', items:[
       { text:'Last full day in Europe 🍷', type:'sched-travel' },
@@ -792,14 +815,11 @@ const schedule = {
     { day:'Tue', m:5, d:16, accent:null, items:[
       { text:'Beat jet lag — morning light + early bed', type:'medium', taskId:'w5_p3' },
       { text:'Send professor emails 🚀', type:'critical', taskId:'w5_t1' },
-      { text:'Spanish — get back on it', type:'high', taskId:'w5_r1' },
       { text:'HD course — start online pre-work', type:'critical', taskId:'w5_p4' },
     ]},
     { day:'Wed', m:5, d:17, accent:null, items:[
-      { text:'Gym — back at it', type:'high', taskId:'w5_p2' },
       { text:'HD course — finish online pre-work', type:'critical', taskId:'w5_p4' },
       { text:'Skincare routine restart', type:'medium', taskId:'w5_pe1' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w5_r1' },
     ]},
     { day:'Thu', m:5, d:18, accent:'milestone-day', items:[
       { text:'🏍️ HD Rider Course — Day 1', type:'sched-milestone', taskId:'w5_p5' },
@@ -815,7 +835,6 @@ const schedule = {
       { text:'Edit + organize trip photos', type:'low', taskId:'w5_c2' },
     ]},
     { day:'Sun', m:5, d:21, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Portfolio resumed — 50% target', type:'high', taskId:'w5_t2' },
       { text:'Tally Europe spend vs. budget', type:'high', taskId:'w5_f1' },
       { text:'Update Austin budget', type:'medium', taskId:'w5_f2' },
@@ -824,40 +843,30 @@ const schedule = {
   ]},
   w6: { days: [
     { day:'Mon', m:5, d:15, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Stock up groceries + supplies pre-surgery', type:'high', taskId:'w5_l3' },
       { text:'Revisit SK book outline', type:'medium', taskId:'w5_c3' },
       { text:'Get haircut before surgery', type:'medium', taskId:'w5_pe2' },
     ]},
     { day:'Tue', m:5, d:16, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Mom cooking session', type:'medium', taskId:'w5_ck1' },
       { text:'Follow up on professor emails', type:'high', taskId:'w6_t3' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
     { day:'Wed', m:5, d:17, accent:null, items:[
-      { text:'Gym — last few days before surgery', type:'high', taskId:'w5_p2' },
       { text:'Set up recovery station at home', type:'critical', taskId:'w5_l2' },
       { text:'Return wardrobe items that don\'t fit', type:'medium', taskId:'w5_l4' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
     { day:'Thu', m:5, d:18, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Open brokerage account (Fidelity)', type:'medium', taskId:'w6_f1' },
       { text:'Read UT Austin lab papers', type:'medium', taskId:'w6_t4' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
     { day:'Fri', m:5, d:19, accent:null, items:[
-      { text:'Gym', type:'high', taskId:'w5_p2' },
       { text:'Confirm all surgery logistics', type:'critical' },
       { text:'Prep recovery station — books, chargers, water', type:'high', taskId:'w5_l2' },
       { text:'Skincare — morning + night', type:'high', taskId:'w6_pe1' },
     ]},
     { day:'Sat', m:5, d:20, accent:null, items:[
-      { text:'Gym — final session before surgery', type:'high', taskId:'w5_p2' },
       { text:'Catch up on mail + admin', type:'medium', taskId:'w6_l1' },
       { text:'Set weekly review habit', type:'medium', taskId:'w6_l2' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
     { day:'Mon', m:5, d:22, accent:'milestone-day', items:[
       { text:'🏥 Hip Labrum Surgery — Jun 22', type:'sched-milestone' },
@@ -877,7 +886,6 @@ const schedule = {
     { day:'Wed', m:6, d:8, accent:null, items:[
       { text:'Morning ritual — coffee, stretch, read', type:'high' },
       { text:'Python deep learning — first session', type:'high', taskId:'w6_t1' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
       { text:'Posture routine — 10 min', type:'high', taskId:'w6_p2' },
     ]},
     { day:'Thu', m:6, d:9, accent:null, items:[
@@ -891,7 +899,6 @@ const schedule = {
       { text:'Intimate Connections — start', type:'medium', taskId:'w6_r2' },
       { text:'Skincare', type:'high', taskId:'w6_pe1' },
       { text:'Touch typing — 20 min', type:'medium', taskId:'w6_pe2' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w6_r3' },
     ]},
     { day:'Sat', m:6, d:11, accent:null, items:[
       { text:'Start Project Hail Mary', type:'medium', taskId:'w7_r2' },
@@ -910,7 +917,6 @@ const schedule = {
     { day:'Mon', m:6, d:13, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Python deep learning — continue', type:'high', taskId:'w7_t2' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
       { text:'Skincare', type:'high', taskId:'w7_pe1' },
     ]},
@@ -924,7 +930,6 @@ const schedule = {
       { text:'Morning ritual', type:'high' },
       { text:'ROS — core modules', type:'high', taskId:'w8_t1' },
       { text:'SK book — 3+ pages', type:'medium', taskId:'w8_c3' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
     { day:'Thu', m:6, d:16, accent:null, items:[
@@ -938,7 +943,6 @@ const schedule = {
       { text:'Weekly review', type:'medium', taskId:'w6_l2' },
       { text:'Research renter\'s insurance', type:'medium', taskId:'w8_pe3' },
       { text:'Start The Name of the Wind', type:'medium', taskId:'w8_r1' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w7_r3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
     { day:'Sat', m:6, d:18, accent:null, items:[
@@ -958,7 +962,6 @@ const schedule = {
     { day:'Mon', m:6, d:20, accent:null, items:[
       { text:'Morning ritual', type:'high' },
       { text:'Research statement — write draft', type:'high', taskId:'w9_t3' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
       { text:'Posture routine', type:'high', taskId:'w8_p2' },
       { text:'Skincare', type:'high', taskId:'w8_pe1' },
     ]},
@@ -972,7 +975,6 @@ const schedule = {
       { text:'Confirm surgeon clearance for move', type:'critical', taskId:'w9_p1' },
       { text:'Confirm Austin housing', type:'critical', taskId:'w9_l2' },
       { text:'Write down all mom recipes', type:'high', taskId:'w9_ck2' },
-      { text:'Spanish — 20 min', type:'high', taskId:'w9_r2' },
     ]},
     { day:'Thu', m:6, d:23, accent:null, items:[
       { text:'Edit + publish YouTube video 🎬', type:'medium', taskId:'w9_t2' },
@@ -1041,6 +1043,8 @@ function loadState() {
   try { const r = localStorage.getItem(STORAGE_KEY); if (r) checked = JSON.parse(r); } catch(e) { checked = {}; }
   loadScheduleState();
   loadGymState();
+  loadSpanishState();
+  loadReadingState();
   // auto-jump to current week
   const today = new Date();
   const ranges = [
@@ -1215,13 +1219,22 @@ function renderSchedule() {
       }
     }
 
-    // gym row
-    const gymDone = gymState[currentWeek] && gymState[currentWeek][dayIdx];
+    // habit rows
+    const gymDone     = gymState[currentWeek]     && gymState[currentWeek][dayIdx];
+    const spanishDone = spanishState[currentWeek] && spanishState[currentWeek][dayIdx];
+    const readingDone = readingState[currentWeek] && readingState[currentWeek][dayIdx];
+    const chk = (done) => done ? `<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>` : '';
     html += `<div class="gym-row" draggable="false" onclick="event.stopPropagation();toggleGym('${currentWeek}',${dayIdx})">
-      <div class="gym-cb${gymDone?' gym-cb-done':''}">
-        ${gymDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
-      </div>
+      <div class="gym-cb${gymDone?' gym-cb-done':''}">${chk(gymDone)}</div>
       <span>🏋️ Gym</span>
+    </div>
+    <div class="gym-row" draggable="false" onclick="event.stopPropagation();toggleSpanish('${currentWeek}',${dayIdx})">
+      <div class="gym-cb spanish-cb${spanishDone?' spanish-cb-done':''}">${chk(spanishDone)}</div>
+      <span>🇪🇸 Spanish</span>
+    </div>
+    <div class="gym-row" draggable="false" onclick="event.stopPropagation();toggleReading('${currentWeek}',${dayIdx})">
+      <div class="gym-cb reading-cb${readingDone?' reading-cb-done':''}">${chk(readingDone)}</div>
+      <span>📚 Reading</span>
     </div>`;
 
     html += `</div></div>`;
@@ -1229,18 +1242,22 @@ function renderSchedule() {
 
   html += `</div>`;
 
-  // gym strip for non-Europe weeks
-  if (weeks[currentWeek].badge.type !== 'travel') {
-    const gymCount = Math.min((gymState[currentWeek] || []).filter(Boolean).length, 5);
-    const bars = [1,2,3,4,5].map(i =>
-      `<div class="gym-bar-block${i <= gymCount ? ' filled' : ''}"></div>`
+  // habit strips
+  const isTravel = weeks[currentWeek].badge.type === 'travel';
+  function habitStrip(label, state, max, barClass, countClass) {
+    const count = Math.min((state[currentWeek] || []).filter(Boolean).length, max);
+    const bars = Array.from({length: max}, (_,i) =>
+      `<div class="gym-bar-block ${barClass}${i < count ? ' filled' : ''}"></div>`
     ).join('');
-    html += `<div class="gym-strip">
-      <span class="gym-strip-label">💪 Gym this week</span>
+    return `<div class="gym-strip">
+      <span class="gym-strip-label">${label}</span>
       <div class="gym-bars">${bars}</div>
-      <span class="gym-strip-count">${gymCount}/5</span>
+      <span class="${countClass}">${count}/${max}</span>
     </div>`;
   }
+  if (!isTravel) html += habitStrip('💪 Gym',     gymState,     5, '',                  'gym-strip-count');
+  html +=                 habitStrip('🇪🇸 Spanish', spanishState, 4, 'spanish-bar-block', 'spanish-strip-count');
+  html +=                 habitStrip('📚 Reading',  readingState, 5, 'reading-bar-block', 'reading-strip-count');
 
   return html;
 }
