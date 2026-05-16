@@ -106,6 +106,9 @@
   .sched-cb { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,0.2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: rgba(255,255,255,0.6); }
   .sched-cb-done { background: #1a1a18; border-color: #1a1a18; }
   .sched-done { opacity: 0.65; }
+  .day-col.drag-over { border-color: #1a1a18; box-shadow: 0 0 0 2px rgba(26,26,24,0.15); background: #fafaf8; }
+  .day-item { cursor: grab; }
+  .day-item:active { cursor: grabbing; }
 
   /* ── Reading list ── */
   .reading-list-view { display: flex; flex-direction: column; gap: 10px; }
@@ -145,6 +148,48 @@
 
 <script>
 const STORAGE_KEY = 'summer26_v3';
+const SCHED_KEY   = 'summer26_sched_v1';
+let scheduleState;
+let dragSrc = null;
+
+function loadScheduleState() {
+  try {
+    const saved = localStorage.getItem(SCHED_KEY);
+    scheduleState = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(schedule));
+  } catch(e) {
+    scheduleState = JSON.parse(JSON.stringify(schedule));
+  }
+}
+
+function saveScheduleState() {
+  try { localStorage.setItem(SCHED_KEY, JSON.stringify(scheduleState)); } catch(e) {}
+}
+
+function dragStart(e, wk, dayIdx, itemIdx) {
+  dragSrc = { wk, dayIdx, itemIdx };
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function dragOver(e, el) {
+  e.preventDefault();
+  el.classList.add('drag-over');
+}
+
+function dragLeave(el) {
+  el.classList.remove('drag-over');
+}
+
+function dropOn(e, wk, dayIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragSrc) return;
+  const srcItems = scheduleState[dragSrc.wk].days[dragSrc.dayIdx].items;
+  const [item] = srcItems.splice(dragSrc.itemIdx, 1);
+  scheduleState[wk].days[dayIdx].items.push(item);
+  dragSrc = null;
+  saveScheduleState();
+  render();
+}
 
 // ─────────────────────────────────────────────
 // TASK DATA
@@ -958,6 +1003,7 @@ let checked    = {};
 
 function loadState() {
   try { const r = localStorage.getItem(STORAGE_KEY); if (r) checked = JSON.parse(r); } catch(e) { checked = {}; }
+  loadScheduleState();
   // auto-jump to current week
   const today = new Date();
   const ranges = [
@@ -1074,7 +1120,7 @@ function renderTasks() {
 // ─────────────────────────────────────────────
 function renderSchedule() {
   const week = weeks[currentWeek];
-  const sched = schedule[currentWeek];
+  const sched = scheduleState[currentWeek];
   const badge = week.badge;
 
   function monthLabel(m) {
@@ -1088,11 +1134,12 @@ function renderSchedule() {
     <div class="week-badge ${badge.type}">${badge.icon} ${badge.text}</div>
     <div class="schedule-grid">`;
 
-  sched.days.forEach(day => {
+  for (let dayIdx = 0; dayIdx < sched.days.length; dayIdx++) {
+    const day = sched.days[dayIdx];
     const today = isToday(day.m, day.d);
     const accentClass = day.accent ? ` ${day.accent}` : '';
     const todayClass  = today ? ' is-today' : '';
-    html += `<div class="day-col${accentClass}${todayClass}">
+    html += `<div class="day-col${accentClass}${todayClass}" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="dropOn(event,'${currentWeek}',${dayIdx})">
       <div class="day-header">
         <div class="day-name">${day.day}</div>
         <div class="day-date">${monthLabel(day.m)} ${day.d}</div>
@@ -1100,39 +1147,39 @@ function renderSchedule() {
       </div>
       <div class="day-items">`;
 
-    day.items.forEach(item => {
+    for (let itemIdx = 0; itemIdx < day.items.length; itemIdx++) {
+      const item = day.items[itemIdx];
       const isLinked = !!item.taskId;
       const isDone   = isLinked && !!checked[item.taskId];
+      const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${currentWeek}',${dayIdx},${itemIdx})"`;
 
       if (['sched-event','sched-travel','sched-milestone','sched-rest'].includes(item.type)) {
         if (isLinked) {
-          // Linked event pill — clickable, shows checkmark when done
-          html += `<div class="day-item ${item.type}${isDone?' sched-done':''}" onclick="toggleTask('${item.taskId}')" style="cursor:pointer;display:flex;align-items:flex-start;gap:6px;">
+          html += `<div class="day-item ${item.type}${isDone?' sched-done':''}" ${dragAttrs} onclick="toggleTask('${item.taskId}')" style="cursor:grab;display:flex;align-items:flex-start;gap:6px;">
             <div class="sched-cb${isDone?' sched-cb-done':''}">
               ${isDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
             </div>
             <span class="sched-item-text"${isDone?' style="text-decoration:line-through;opacity:0.5"':''}>${item.text}</span>
           </div>`;
         } else {
-          html += `<div class="day-item ${item.type}"><span class="sched-item-text">${item.text}</span></div>`;
+          html += `<div class="day-item ${item.type}" ${dragAttrs}><span class="sched-item-text">${item.text}</span></div>`;
         }
       } else {
         if (isLinked) {
-          // Linked task item — clickable checkbox
-          html += `<div class="day-item sched-task${isDone?' sched-done':''}" onclick="toggleTask('${item.taskId}')" style="cursor:pointer;">
+          html += `<div class="day-item sched-task${isDone?' sched-done':''}" ${dragAttrs} onclick="toggleTask('${item.taskId}')" style="cursor:grab;">
             <div class="sched-cb${isDone?' sched-cb-done':''}">
               ${isDone?`<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4L3 6L7 2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
             </div>
             <span class="sched-item-text"${isDone?' style="text-decoration:line-through;opacity:0.5"':''}>${item.text}</span>
           </div>`;
         } else {
-          html += `<div class="day-item sched-task"><span class="sched-dot ${item.type}"></span><span class="sched-item-text">${item.text}</span></div>`;
+          html += `<div class="day-item sched-task" ${dragAttrs}><span class="sched-dot ${item.type}"></span><span class="sched-item-text">${item.text}</span></div>`;
         }
       }
-    });
+    }
 
     html += `</div></div>`;
-  });
+  }
 
   html += `</div>`;
   return html;
