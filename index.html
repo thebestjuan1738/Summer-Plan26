@@ -164,7 +164,7 @@
 
 <script>
 const STORAGE_KEY = 'summer26_v3';
-const SCHED_KEY   = 'summer26_sched_v1';
+const SCHED_KEY   = 'summer26_sched_v2';
 const GYM_KEY     = 'summer26_gym_v1';
 const SPANISH_KEY = 'summer26_spanish_v1';
 const READING_KEY = 'summer26_reading_v1';
@@ -725,7 +725,7 @@ const schedule = {
     ]},
     { day:'Tue', m:4, d:26, accent:null, items:[
       { text:'Finalize packing', type:'critical', taskId:'w2_l2' },
-      { text:'Confirm all Europe bookings', type:'critical' },
+      { text:'Confirm all Europe bookings', type:'note' },
       { text:'HYSA funded — confirm transfer', type:'high', taskId:'w2_f1' },
       { text:'Research ETF basics (read only)', type:'low', taskId:'w2_f3' },
       { text:'Mom / Colombian dish session', type:'medium', taskId:'w2_ck1' },
@@ -733,7 +733,7 @@ const schedule = {
   ]},
   w3: { days: [
     { day:'Wed', m:4, d:27, accent:null, items:[
-      { text:'Final Europe prep — charge devices', type:'high' },
+      { text:'Final Europe prep — charge devices', type:'note' },
       { text:'Print or save offline: tickets, maps', type:'high', taskId:'w3_l1' },
       { text:'48 Laws / Models — finish or pack it', type:'medium', taskId:'w3_r1' },
     ]},
@@ -860,7 +860,7 @@ const schedule = {
       { text:'Read UT Austin lab papers', type:'medium', taskId:'w6_t4' },
     ]},
     { day:'Fri', m:5, d:19, accent:null, items:[
-      { text:'Confirm all surgery logistics', type:'critical' },
+      { text:'Confirm all surgery logistics', type:'note' },
       { text:'Prep recovery station — books, chargers, water', type:'high', taskId:'w5_l2' },
       { text:'Skincare — morning + night', type:'high', taskId:'w6_pe1' },
     ]},
@@ -884,18 +884,17 @@ const schedule = {
       { text:'Skincare', type:'high', taskId:'w6_pe1' },
     ]},
     { day:'Wed', m:6, d:8, accent:null, items:[
-      { text:'Morning ritual — coffee, stretch, read', type:'high' },
       { text:'Python deep learning — first session', type:'high', taskId:'w6_t1' },
       { text:'Posture routine — 10 min', type:'high', taskId:'w6_p2' },
     ]},
     { day:'Thu', m:6, d:9, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Portfolio — resume from laptop', type:'critical', taskId:'w6_t2' },
       { text:'SK book — write from bed', type:'medium', taskId:'w6_c2' },
       { text:'Posture routine', type:'high', taskId:'w6_p2' },
     ]},
     { day:'Fri', m:6, d:10, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Intimate Connections — start', type:'medium', taskId:'w6_r2' },
       { text:'Skincare', type:'high', taskId:'w6_pe1' },
       { text:'Touch typing — 20 min', type:'medium', taskId:'w6_pe2' },
@@ -915,25 +914,25 @@ const schedule = {
   ]},
   w8: { days: [
     { day:'Mon', m:6, d:13, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Python deep learning — continue', type:'high', taskId:'w7_t2' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
       { text:'Skincare', type:'high', taskId:'w7_pe1' },
     ]},
     { day:'Tue', m:6, d:14, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Portfolio — push to complete', type:'critical', taskId:'w8_t3' },
       { text:'Recreate lab work — document everything', type:'high', taskId:'w8_t4' },
       { text:'Touch typing', type:'high', taskId:'w7_pe1' },
     ]},
     { day:'Wed', m:6, d:15, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'ROS — core modules', type:'high', taskId:'w8_t1' },
       { text:'SK book — 3+ pages', type:'medium', taskId:'w8_c3' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
     { day:'Thu', m:6, d:16, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Start walking robot upgrade', type:'high', taskId:'w8_t2' },
       { text:'Film robot demo footage', type:'medium', taskId:'w8_c2' },
       { text:'Research Austin neighborhoods', type:'high', taskId:'w8_pe2' },
@@ -960,13 +959,13 @@ const schedule = {
   ]},
   w9: { days: [
     { day:'Mon', m:6, d:20, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Research statement — write draft', type:'high', taskId:'w9_t3' },
       { text:'Posture routine', type:'high', taskId:'w8_p2' },
       { text:'Skincare', type:'high', taskId:'w8_pe1' },
     ]},
     { day:'Tue', m:6, d:21, accent:null, items:[
-      { text:'Morning ritual', type:'high' },
+
       { text:'Portfolio — final review, send to someone', type:'high', taskId:'w9_t1' },
       { text:'Pack for Austin — start', type:'critical', taskId:'w9_l1' },
       { text:'Last wardrobe returns completed', type:'medium', taskId:'w9_pe3' },
