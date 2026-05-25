@@ -499,6 +499,7 @@ const weeks = {
         { id: 'w6_r1', text: 'Atomic Habits — read + apply', sub: 'Build your recovery routine around its principles', priority: 'high' },
         { id: 'w6_r2', text: 'Start Intimate Connections (Burns)', sub: 'Dating confidence — perfect bed rest read', priority: 'medium' },
         { id: 'w6_r3', text: 'Spanish 20 min daily', sub: 'No excuses — easiest habit to keep from bed', priority: 'high' },
+        { id: 'w6_r4', text: 'Start Mindful Self-Compassion (Neff)', sub: 'Therapist rec — pairs with surgery downtime, stops the frustration spiral', priority: 'medium' },
       ]},
       { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
         { id: 'w6_c1', text: 'Singing lessons — remote or seated session', sub: 'Check if teacher can adapt to recovery', priority: 'medium' },
@@ -583,6 +584,7 @@ const weeks = {
         { id: 'w8_r1', text: 'Start The Name of the Wind (Rothfuss)', sub: 'Fiction — immersive fantasy for deep recovery downtime', priority: 'medium' },
         { id: 'w8_r2', text: 'Start The Subtle Art of Not Giving a F*ck', sub: 'Fast read, motivating', priority: 'medium' },
         { id: 'w8_r3', text: 'Spanish 20 min daily', priority: 'high' },
+        { id: 'w8_r4', text: 'Start Feeling Great (Burns)', sub: 'Fast CBT for negative thoughts — follows Intimate Connections. Therapist rec.', priority: 'medium' },
       ]},
       { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
         { id: 'w8_c1', text: 'Singing lessons — weekly', priority: 'high' },
@@ -627,6 +629,7 @@ const weeks = {
       { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
         { id: 'w9_r1', text: 'Finish whatever book you\'re mid', sub: 'Don\'t leave a half-read book behind', priority: 'medium' },
         { id: 'w9_r2', text: 'Spanish — don\'t break the streak', priority: 'high' },
+        { id: 'w9_r3', text: 'Everything is Figurable Outable (Forleo)', sub: 'Optional — low priority, rainy day read', priority: 'low' },
       ]},
       { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
         { id: 'w9_c1', text: 'Final singing lesson before Austin', sub: 'Ask teacher for exercises to keep up solo', priority: 'medium' },
@@ -858,11 +861,13 @@ const schedule = {
     { day:'Thu', m:5, d:18, accent:null, items:[
       { text:'Open brokerage account (Fidelity)', type:'medium', taskId:'w6_f1' },
       { text:'Read UT Austin lab papers', type:'medium', taskId:'w6_t4' },
+      { text:'Intimate Connections — start reading', type:'medium', taskId:'w6_r2' },
     ]},
     { day:'Fri', m:5, d:19, accent:null, items:[
       { text:'Confirm all surgery logistics', type:'note' },
       { text:'Prep recovery station — books, chargers, water', type:'high', taskId:'w5_l2' },
       { text:'Skincare — morning + night', type:'high', taskId:'w6_pe1' },
+      { text:'Mindful Self-Compassion — start', type:'medium', taskId:'w6_r4' },
     ]},
     { day:'Sat', m:5, d:20, accent:null, items:[
       { text:'Catch up on mail + admin', type:'medium', taskId:'w6_l1' },
@@ -929,6 +934,7 @@ const schedule = {
 
       { text:'ROS — core modules', type:'high', taskId:'w8_t1' },
       { text:'SK book — 3+ pages', type:'medium', taskId:'w8_c3' },
+      { text:'Feeling Great — start', type:'medium', taskId:'w8_r4' },
       { text:'Posture routine', type:'high', taskId:'w7_p2' },
     ]},
     { day:'Thu', m:6, d:16, accent:null, items:[
@@ -992,6 +998,7 @@ const schedule = {
       { text:'Say goodbyes — family + friends', type:'high', taskId:'w9_l4' },
       { text:'Smash burgers — date dish #5', type:'low', taskId:'w9_pe2' },
       { text:'HYSA + brokerage confirmed active', type:'medium', taskId:'w9_f2' },
+      { text:'Everything is Figurable Outable — if you have time', type:'low', taskId:'w9_r3' },
     ]},
     { day:'Sun', m:6, d:26, accent:'milestone-day', items:[
       { text:'🍽️ Big family farewell meal', type:'sched-milestone', taskId:'w9_ck1' },
@@ -1029,6 +1036,18 @@ const books = [
     note:'Fiction — almost mandatory for STEM people. If you haven\'t read it, fix that.', tag:'queued', section:'Later Summer' },
   { id:'b12', emoji:'💡', title:"So Good They Can't Ignore You", author:'Cal Newport',
     note:'Career capital over passion. Direct fit for grad school decision-making.', tag:'queued', section:'Later Summer' },
+  { id:'b13', emoji:'💛', title:'Intimate Connections', author:'David D. Burns',
+    note:'W6 recovery — dating confidence, evidence-based CBT. Therapist rec. Perfect bed rest read.', tag:'queued', section:'Up Next' },
+  { id:'b14', emoji:'✍️', title:'Storyworthy', author:'Matthew Dicks',
+    note:'W7 — best book on storytelling. Improves dating, public speaking, and YouTube presence simultaneously.', tag:'queued', section:'Up Next' },
+  { id:'b15', emoji:'🤷', title:"The Subtle Art of Not Giving a F*ck", author:'Mark Manson',
+    note:'W8 — fast, motivating read before Austin. Resets priorities going into a big new chapter.', tag:'queued', section:'Later Summer' },
+  { id:'b16', emoji:'🧘', title:'Mindful Self-Compassion', author:'Kristin Neff',
+    note:'W6 recovery — pairs with surgery downtime, stops the frustration spiral. Therapist rec.', tag:'queued', section:'Later Summer' },
+  { id:'b17', emoji:'🌟', title:'Feeling Great', author:'David Burns',
+    note:'W8–W9 — follows Intimate Connections, fast CBT for negative thoughts. Therapist rec.', tag:'queued', section:'Later Summer' },
+  { id:'b18', emoji:'✨', title:'Everything is Figurable Outable', author:'Marie Forleo',
+    note:'W9 — optional, low priority, rainy day read.', tag:'queued', section:'Later Summer' },
 ];
 
 // ─────────────────────────────────────────────
