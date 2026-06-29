@@ -144,8 +144,11 @@
   .tag-queued  { background: #f3f4f6; color: #6b7280; }
   .tag-done    { background: #d1fae5; color: #065f46; }
   .tag-trip    { background: #fef3e2; color: #92400e; }
-  .book-checkbox { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .book-card.done .book-checkbox { background: #1a1a18; border-color: #1a1a18; }
+  .book-status-cycle { width: 26px; height: 26px; border-radius: 7px; border: 1.5px solid #e0ddd8; display: flex; align-items: center; justify-content: center; transition: all 0.15s; cursor: pointer; font-size: 12px; background: #fff; flex-shrink: 0; }
+  .book-status-cycle.is-reading { background: #1d4ed8; border-color: #1d4ed8; }
+  .book-status-cycle.is-done    { background: #1a1a18; border-color: #1a1a18; }
+  .book-card.is-reading { border-left: 3px solid #bfdbfe; background: #f8faff; }
+  .book-card.done .book-title { text-decoration: line-through; color: #bbb; }
   .reading-progress-summary { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 16px; display: flex; gap: 20px; align-items: center; }
   .rps-stat  { text-align: center; flex-shrink: 0; }
   .rps-num   { font-size: 22px; font-weight: 700; }
@@ -163,15 +166,17 @@
 <div id="app"></div>
 
 <script>
-const STORAGE_KEY = 'summer26_v3';
-const SCHED_KEY   = 'summer26_sched_v2';
-const GYM_KEY     = 'summer26_gym_v1';
-const SPANISH_KEY = 'summer26_spanish_v1';
-const READING_KEY = 'summer26_reading_v1';
+const STORAGE_KEY   = 'summer26_v3';
+const SCHED_KEY     = 'summer26_sched_v2';
+const GYM_KEY       = 'summer26_gym_v1';
+const SPANISH_KEY   = 'summer26_spanish_v1';
+const READING_KEY   = 'summer26_reading_v1';
+const BOOK_STATE_KEY = 'summer26_book_state_v1';
 let scheduleState;
 let gymState = {};
 let spanishState = {};
 let readingState = {};
+let bookState = {};
 let dragSrc = null;
 
 function loadScheduleState() {
@@ -248,6 +253,31 @@ function toggleReading(wk, dayIdx) {
   if (!Array.isArray(readingState[wk])) readingState[wk] = [];
   readingState[wk][dayIdx] = !readingState[wk][dayIdx];
   saveReadingState();
+  render();
+}
+
+function loadBookState() {
+  try {
+    const saved = localStorage.getItem(BOOK_STATE_KEY);
+    bookState = saved ? JSON.parse(saved) : {};
+  } catch(e) { bookState = {}; }
+  // migrate old checked[] done state and original 'reading' tags
+  books.forEach(b => {
+    if (!(b.id in bookState)) {
+      if (checked[b.id]) bookState[b.id] = 'done';
+      else if (b.tag === 'reading') bookState[b.id] = 'reading';
+    }
+  });
+}
+function saveBookState() {
+  try { localStorage.setItem(BOOK_STATE_KEY, JSON.stringify(bookState)); } catch(e) {}
+}
+function cycleBookStatus(id) {
+  const cur = bookState[id] || null;
+  if (!cur)              bookState[id] = 'reading';
+  else if (cur==='reading') bookState[id] = 'done';
+  else                   delete bookState[id];
+  saveBookState();
   render();
 }
 
@@ -478,7 +508,7 @@ const weeks = {
     ]
   },
   w6: {
-    label: 'Week 6', dates: 'Jun 22 – Jul 6',
+    label: 'Week 6', dates: 'Jun 22–28',
     badge: { type: 'home', icon: '🔨', text: 'Home Grind — Full Active Mode' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
@@ -522,8 +552,45 @@ const weeks = {
       ]},
     ]
   },
+  w6b: {
+    label: 'Week 7', dates: 'Jun 29–Jul 5',
+    badge: { type: 'home', icon: '📚', text: 'Home Grind — Deep Focus Week' },
+    categories: [
+      { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
+        { id: 'w6b_p1', text: 'Gym 5x this week', sub: 'Keep the streak alive — consistency beats intensity', priority: 'high' },
+        { id: 'w6b_p2', text: 'Daily posture + mobility', sub: '10 min daily — build the habit', priority: 'high' },
+      ]},
+      { id: 'technical', icon: '💻', title: 'Technical', tasks: [
+        { id: 'w6b_t1', text: 'Python deep learning — continue course', sub: 'Daily sessions, push through', priority: 'high' },
+        { id: 'w6b_t2', text: 'Portfolio site — push to 75% done', sub: 'Real sections with real content', priority: 'high' },
+        { id: 'w6b_t3', text: 'Start ROS fundamentals', sub: 'Intro modules — get comfortable with the basics', priority: 'medium' },
+      ]},
+      { id: 'reading', icon: '📚', title: 'Reading & Learning', tasks: [
+        { id: 'w6b_r1', text: 'Finish Atomic Habits (or current book)', sub: 'Apply what you read — track one new habit this week', priority: 'high' },
+        { id: 'w6b_r2', text: 'Start Storyworthy (Dicks)', sub: 'Best book on storytelling — dating + public speaking', priority: 'medium' },
+        { id: 'w6b_r3', text: 'Spanish 20 min daily', priority: 'high' },
+      ]},
+      { id: 'creative', icon: '🎨', title: 'Creative', tasks: [
+        { id: 'w6b_c1', text: 'Singing lessons — weekly session', priority: 'high' },
+        { id: 'w6b_c2', text: 'SK book — write 3+ pages', priority: 'medium' },
+        { id: 'w6b_c3', text: 'Calligraphy — daily 15 min', priority: 'low' },
+      ]},
+      { id: 'finance', icon: '💰', title: 'Finance', tasks: [
+        { id: 'w6b_f1', text: 'Make first ETF purchase if ready', sub: 'Small amount — VOO on Fidelity', priority: 'low' },
+        { id: 'w6b_f2', text: 'Confirm Austin stipend start date + amount', sub: 'Know exactly what you\'re working with', priority: 'high' },
+      ]},
+      { id: 'personal', icon: '🪞', title: 'Personal', tasks: [
+        { id: 'w6b_pe1', text: 'Skincare + touch typing daily', priority: 'high' },
+        { id: 'w6b_pe2', text: 'Wardrobe — place any remaining orders', sub: 'Last chance to get pieces before Austin', priority: 'medium' },
+      ]},
+      { id: 'cooking', icon: '🍳', title: 'Cooking', tasks: [
+        { id: 'w6b_ck1', text: 'Cook a solid meal at home', sub: 'Get back in the kitchen after eating out all week', priority: 'medium' },
+        { id: 'w6b_ck2', text: 'Learn another mom / Colombian dish', priority: 'medium' },
+      ]},
+    ]
+  },
   w7: {
-    label: 'Week 7', dates: 'Jul 6–13',
+    label: 'Week 8', dates: 'Jul 6–13',
     badge: { type: 'home', icon: '🤖', text: 'Deep Work + Lab Mode' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
@@ -566,7 +633,7 @@ const weeks = {
     ]
   },
   w8: {
-    label: 'Week 8', dates: 'Jul 13–20',
+    label: 'Week 9', dates: 'Jul 13–20',
     badge: { type: 'home', icon: '🚀', text: 'Final Home Sprint — Austin Countdown' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
@@ -606,7 +673,7 @@ const weeks = {
     ]
   },
   w9: {
-    label: 'Week 9', dates: 'Jul 20–27',
+    label: 'Week 10', dates: 'Jul 20–27',
     badge: { type: 'austin', icon: '🤘', text: 'Final Week — Austin Countdown' },
     categories: [
       { id: 'physical', icon: '🏋️', title: 'Physical', tasks: [
@@ -881,6 +948,43 @@ const schedule = {
       { text:'Mom cooking session', type:'medium', taskId:'w5_ck1' },
     ]},
   ]},
+  w6b: { days: [
+    { day:'Mon', m:5, d:29, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w6b_p1' },
+      { text:'Python deep learning — continue', type:'high', taskId:'w6b_t1' },
+      { text:'Portfolio — push to 75% done', type:'high', taskId:'w6b_t2' },
+    ]},
+    { day:'Tue', m:5, d:30, accent:null, items:[
+      { text:'Start ROS fundamentals', type:'medium', taskId:'w6b_t3' },
+      { text:'Posture routine — 10 min', type:'high', taskId:'w6b_p2' },
+      { text:'Skincare', type:'high', taskId:'w6b_pe1' },
+    ]},
+    { day:'Wed', m:6, d:1, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w6b_p1' },
+      { text:'Finish Atomic Habits', type:'high', taskId:'w6b_r1' },
+      { text:'SK book — write', type:'medium', taskId:'w6b_c2' },
+    ]},
+    { day:'Thu', m:6, d:2, accent:null, items:[
+      { text:'Python — continue', type:'high', taskId:'w6b_t1' },
+      { text:'Confirm Austin stipend details', type:'high', taskId:'w6b_f2' },
+      { text:'Touch typing', type:'medium', taskId:'w6b_pe1' },
+    ]},
+    { day:'Fri', m:6, d:3, accent:null, items:[
+      { text:'Gym', type:'high', taskId:'w6b_p1' },
+      { text:'🎵 Singing lesson', type:'sched-event', taskId:'w6b_c1' },
+      { text:'Wardrobe — place remaining orders', type:'medium', taskId:'w6b_pe2' },
+    ]},
+    { day:'Sat', m:6, d:4, accent:null, items:[
+      { text:'🎆 4th of July', type:'sched-event' },
+      { text:'Cook a solid meal at home', type:'medium', taskId:'w6b_ck1' },
+      { text:'Calligraphy practice', type:'low', taskId:'w6b_c3' },
+    ]},
+    { day:'Sun', m:6, d:5, accent:null, items:[
+      { text:'Weekly review — what got done?', type:'medium', taskId:'w6b_t2' },
+      { text:'Start Storyworthy', type:'medium', taskId:'w6b_r2' },
+      { text:'Mom / Colombian dish session', type:'medium', taskId:'w6b_ck2' },
+    ]},
+  ]},
   w7: { days: [
     { day:'Mon', m:6, d:6, accent:null, items:[
       { text:'Gym — keep the streak going', type:'high', taskId:'w7_p1' },
@@ -1067,6 +1171,7 @@ function loadState() {
   loadGymState();
   loadSpanishState();
   loadReadingState();
+  loadBookState();
   // auto-jump to current week
   const today = new Date();
   const ranges = [
@@ -1075,8 +1180,9 @@ function loadState() {
     { key:'w3', start:[2026,4,27], end:[2026,5,3]  },
     { key:'w4', start:[2026,5,3],  end:[2026,5,14] },
     { key:'w5', start:[2026,5,14], end:[2026,5,22] },
-    { key:'w6', start:[2026,5,22], end:[2026,6,6]  },
-    { key:'w7', start:[2026,6,6],  end:[2026,6,13] },
+    { key:'w6',  start:[2026,5,22], end:[2026,5,29] },
+    { key:'w6b', start:[2026,5,29], end:[2026,6,6]  },
+    { key:'w7',  start:[2026,6,6],  end:[2026,6,13] },
     { key:'w8', start:[2026,6,13], end:[2026,6,20] },
     { key:'w9', start:[2026,6,20], end:[2026,6,28] },
   ];
@@ -1288,17 +1394,19 @@ function renderSchedule() {
 // RENDER: Reading List view
 // ─────────────────────────────────────────────
 function renderReading() {
-  const total = books.length;
-  const done  = books.filter(b => checked[b.id]).length;
-  const pct   = total ? Math.round(done/total*100) : 0;
+  const total   = books.length;
+  const done    = books.filter(b => bookState[b.id] === 'done').length;
+  const reading = books.filter(b => bookState[b.id] === 'reading').length;
+  const pct     = total ? Math.round(done/total*100) : 0;
 
   let html = `
     <div class="reading-list-view">
     <div class="reading-progress-summary">
+      <div class="rps-stat"><div class="rps-num">${reading}</div><div class="rps-label">Reading</div></div>
       <div class="rps-stat"><div class="rps-num">${done}</div><div class="rps-label">Finished</div></div>
-      <div class="rps-stat"><div class="rps-num">${total-done}</div><div class="rps-label">Remaining</div></div>
+      <div class="rps-stat"><div class="rps-num">${total-done-reading}</div><div class="rps-label">Queued</div></div>
       <div class="rps-bar-wrap">
-        <div class="rps-bar-label">Summer reading · ${pct}%</div>
+        <div class="rps-bar-label">Summer reading · ${pct}% finished</div>
         <div class="rps-bar"><div class="rps-bar-fill" style="width:${pct}%"></div></div>
       </div>
     </div>`;
@@ -1308,11 +1416,20 @@ function renderReading() {
     if (!list.length) return;
     html += `<div class="reading-section-title">${section}</div>`;
     list.forEach(b => {
-      const isDone = !!checked[b.id];
-      const tagClass = isDone ? 'done' : b.tag;
-      const tagText  = isDone ? 'Finished ✓' : (b.tag==='reading'?'Reading now':b.tag==='trip'?'Bring on trip':'Queued');
+      const status    = bookState[b.id] || null;
+      const isDone    = status === 'done';
+      const isReading = status === 'reading';
+      let cardExtra = isDone ? ' done' : isReading ? ' is-reading' : '';
+      let tagClass, tagText;
+      if (isDone)        { tagClass = 'done';    tagText = 'Finished ✓'; }
+      else if (isReading){ tagClass = 'reading'; tagText = 'Reading now'; }
+      else               { tagClass = b.tag==='trip' ? 'trip' : 'queued';
+                           tagText  = b.tag==='trip' ? 'Bring on trip' : 'Queued'; }
+      let cycleIcon = '';
+      if (isDone)        cycleIcon = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      else if (isReading) cycleIcon = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3" fill="white"/></svg>`;
       html += `
-        <div class="book-card${isDone?' done':''}" onclick="toggleTask('${b.id}')">
+        <div class="book-card${cardExtra}" onclick="cycleBookStatus('${b.id}')">
           <div class="book-emoji">${b.emoji}</div>
           <div class="book-info">
             <div class="book-title">${b.title}</div>
@@ -1320,7 +1437,7 @@ function renderReading() {
             <div class="book-note">${b.note}</div>
           </div>
           <div class="book-status">
-            <div class="book-checkbox">${isDone?`<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}</div>
+            <div class="book-status-cycle${isDone?' is-done':isReading?' is-reading':''}">${cycleIcon}</div>
             <span class="book-tag tag-${tagClass}">${tagText}</span>
           </div>
         </div>`;
